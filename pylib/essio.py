@@ -64,26 +64,38 @@ def pyg_get_file_varlst(infile):
 		varlst.append(varnam)
 	return(varlst)
 
-def pyg_read_file(infile,varlst=None,coords=None,dimlst=None):
+def pyg_read_file(infile,varlst=None,coords=None,dimlst=None,attrlst=None):
 	if varlst is None: varlst=pyg_get_file_varlst(infile)
 	grbptr=pygrib.open(infile)
 	datset=xarray.Dataset()
 	if coords is None: 
 		coords=datset.coords
-	dimlst=["lon","lat"]
+	if dimlst is None: 
+		dimlst=["lat","lon"]
 	for varnam in varlst:
-		print(varnam)
 		grbmsg=grbptr.select(name=varnam)[0]
 		print(grbmsg)
-		data1,lat1,lon1=grbmsg.data()
-		print(lat.shape)
-		print(lon.shape)
-		coords.update({"lats":(dimlst,lat1),})
-		coords.update({"lons":(dimlst,lon1),})
-		if dimlst is None: dimlst=coords.keys()		#["lat","lon"]
-		print(dimlst)
-		#print(data1)
+		data1,lats2d,lons2d=grbmsg.data()
+		coords.update({"lats2d":(dimlst,lats2d),})
+		coords.update({"lons2d":(dimlst,lons2d),})
+		coords.update({"lat":lats2d[:,0]})
+		coords.update({"lon":lons2d[0,:]})
+		if dimlst is None: dimlst=coords.keys()	
+		if attrlst is None: attrlst=grbmsg.keys()
 		datset[varnam]=xarray.DataArray(data=data1,dims=dimlst,coords=coords,name=varnam)
+		attrs=datset[varnam].attrs
+		for attrnam in attrlst:
+			print(attrnam)
+			#attrnam=str(attrnam)
+			if attrnam in grbmsg.keys():
+				#if grbmsg[attrnam] is not None:
+					try:
+                				value = grbmsg[attrnam]
+            				except:
+                				value = None
+					attrs.update({attrnam:value})
+		datset[varnam].attrs=attrs
+		print(datset)
 	return(datset)
 
 
