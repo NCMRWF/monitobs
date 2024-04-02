@@ -64,40 +64,73 @@ def pyg_get_file_varlst(infile):
 		varlst.append(varnam)
 	return(varlst)
 
-def pyg_read_file(infile,varlst=None,coords=None,dimlst=None,attrlst=None):
+def pyg_indx(infile,keylist,indxfltr):
+	if keylist is None:
+		grbindx=pygrib.open(infile)
+	else:
+		grbindx=pygrib.index(infile,*keylist)
+	if indxfltr is None:
+		grbindx=grbindx.select()
+	else:
+		grbindx=grbindx.select(**indxfltr)
+	return(grbindx)
+
+def pyg_get_levs(infile):
+	gr = pygrib.open(infile) 
+	levlst =[]
+	for g in gr:
+	    levlst.append(g.level)
+	print(levlst)
+	levlst=numpy.array(levlst)
+	print(levlst)
+	return(levlst)
+
+def pyg_datset_attr(datset,grbmsg,varnam,attrlst=None,attrs=None):
+	if attrlst is None: attrlst=grbmsg.keys()
+	if attrs is None: attrs=datset[varnam].attrs
+	print(grbmsg)
+	for attrnam in attrlst:
+		print(attrnam)
+		#attrnam=str(attrnam)
+		if attrnam in grbmsg.keys():
+			#if grbmsg[attrnam] is not None:
+				try:
+               				value = grbmsg[attrnam]
+        			except:
+               				value = None
+				attrs.update({attrnam:value})
+	datset[varnam].attrs=attrs
+	print(datset)
+	return(datset)
+
+def pyg_read_file(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dimlst=None,attrlst=None):
 	if varlst is None: varlst=pyg_get_file_varlst(infile)
-	grbptr=pygrib.open(infile)
+	levlst=pyg_get_levs(infile)
 	datset=xarray.Dataset()
 	if coords is None: 
 		coords=datset.coords
 	if dimlst is None: 
 		dimlst=["lat","lon"]
 	for varnam in varlst:
-		grbmsg=grbptr.select(name=varnam)[0]
-		print(grbmsg)
+		#indxkeys=['name','shortName','level','forecastTime']
+		indxfltr={"name":varnam,}
+		grbptr=pyg_indx(infile,indxkeys,indxfltr)
+		grbmsg=grbptr[0]
 		data1,lats2d,lons2d=grbmsg.data()
 		coords.update({"lats2d":(dimlst,lats2d),})
 		coords.update({"lons2d":(dimlst,lons2d),})
 		coords.update({"lat":lats2d[:,0]})
 		coords.update({"lon":lons2d[0,:]})
+		attrlst=grbmsg.__getattr__
+		print(attrlst)
 		if dimlst is None: dimlst=coords.keys()	
-		if attrlst is None: attrlst=grbmsg.keys()
 		datset[varnam]=xarray.DataArray(data=data1,dims=dimlst,coords=coords,name=varnam)
-		attrs=datset[varnam].attrs
-		for attrnam in attrlst:
-			print(attrnam)
-			#attrnam=str(attrnam)
-			if attrnam in grbmsg.keys():
-				#if grbmsg[attrnam] is not None:
-					try:
-                				value = grbmsg[attrnam]
-            				except:
-                				value = None
-					attrs.update({attrnam:value})
-		datset[varnam].attrs=attrs
-		print(datset)
+		#datset=pyg_datset_attr(datset,grbmsg,varnam)
 	return(datset)
 
+def pyg_extract(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dimlst=None,attrlst=None):
+	return(pyg_read_file(infile,indxkeys,indxfltr,varlst,coords,dimlst,attrlst))
+		
 
 #############################################################################################################################
 ### IRIS based functions
@@ -504,7 +537,7 @@ def datset_save(datset,outpath=None,outfile=None,infile=None,varlst=None,dimlst=
 	return(outfile)
 	
 
-def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,ref_dim=None,option=2,diagflg=0):
+def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,ref_dim=None,indxkeys=None,indxfltr=None,attrlst=None,option=2,diagflg=0):
 	switcher = {
 		"0" :lambda: irx_extract(infile,varlst,dimlst=dimlst,coords=coords,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option),
 		"1" :lambda: irx_extract(infile,varlst,dimlst=dimlst,coords=coords,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option),
@@ -512,13 +545,14 @@ def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=No
 		"3" :lambda: irx_extract(infile,varlst,dimlst=dimlst,coords=coords,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option),
 		"4" :lambda: nix_extract(infile,varlst,dimlst),
 		"5" :lambda: xar_extract(infile,varlst,dimlst),
+		"6" :lambda: pyg_extract(infile,indxkeys=indxkeys,indxfltr=indxfltr,varlst=varlst,coords=coords,dimlst=dimlst,attrlst=attrlst),
     	}
 	func = switcher.get(str(option), lambda: 'Invalid option : '+str(option) )
 	datset = func()
 	if outpath is not None: outfile=datset_save(datset,outpath,outfile,infile,diagflg=diagflg)
 	return(datset)
 
-def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,refvar=None,ref_dim=None,option=2,diagflg=0):
+def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,refvar=None,ref_dim=None,indxkeys=None,indxfltr=None,attrlst=None,option=None,diagflg=0):
 	if datset is None:
 		datset=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,option=option,diagflg=diagflg)
 	#print(datset)
@@ -528,14 +562,26 @@ def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None
 			if refvar is None: refvar=xar_varlst(datset)[0]
 			#if refvar is None: datset[1]
 			ref_dim=xar_ref_dim(datset,refvar)
-		datnew=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option,diagflg=diagflg)
+		datnew=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,ref_dim=ref_dim,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=indxfltr,option=option,diagflg=diagflg)
 		#print(datnew)
 		for varnam in varlst:
 			datset.update({varnam:(dimlst,datnew[varnam])})
 	#print(datset)
 	return(datset)
 
-def datset_build(filepath,filefldr,varfile,varlst,varstash,varopt,dimlst,datset=None):
+def datset_append(infiles,recdim="time",varlst=None,dimlst=None,dimsize=None,reclen=None,recgap=None,recrds=None,datset=None,outpath=None,outfile=None,indxkeys=None,indxfltr=None,attrlst=None,option=None,diagflg=0):
+	if type(infiles) is list:
+		filelst=infiles
+	else:
+		filelst=obslib.globlist(infiles)
+	if reclen is None: reclen=len(filelst)
+	for file1 in filelst:
+		dat1=datset_extract(file1,varlst=varlst,dimlst=dimlst,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=attrlst,option=option)
+		datset=xar_append(dat1,reclen,recdim,varlst=varlst,dimlst=dimlst,dimsize=dimsize,recrds=recrds,recgap=recgap,datset=datset)
+	if outpath is not None: outfile=datset_save(datset,outpath,outfile,diagflg=diagflg)
+	return(datset)
+
+def datset_build(filepath,filefldr,varfile,varlst,varstash,varopt,dimlst,indxkeys=None,indxfltr=None,attrlst=None,option=None,datset=None):
 	print(varfile,varlst,varstash,varopt)
 	if varlst is None: varlst=list(varfile.keys())
 	for varnam in varlst:
@@ -550,20 +596,8 @@ def datset_build(filepath,filefldr,varfile,varlst,varstash,varopt,dimlst,datset=
 		if varnam in varopt:
 			option=varopt[varnam]
 		else:
-			option=2
+			option=option
 		infiles=filepath+"/"+filefldr+"/"+filenam
-		datset=datset_extend(infiles,[varnam],datset=datset,stashcode=stashcode,dimlst=dimlst,option=option)
-	return(datset)
-
-def datset_append(infiles,recdim="time",varlst=None,dimlst=None,dimsize=None,reclen=None,recgap=None,recrds=None,datset=None,outpath=None,outfile=None,diagflg=0):
-	if type(infiles) is list:
-		filelst=infiles
-	else:
-		filelst=obslib.globlist(infiles)
-	if reclen is None: reclen=len(filelst)
-	for file1 in filelst:
-		dat1=datset_extract(file1,varlst=varlst,dimlst=dimlst)
-		datset=xar_append(dat1,reclen,recdim,varlst=varlst,dimlst=dimlst,dimsize=dimsize,recrds=recrds,recgap=recgap,datset=datset)
-	if outpath is not None: outfile=datset_save(datset,outpath,outfile,diagflg=diagflg)
+		datset=datset_extend(infiles,[varnam],datset=datset,stashcode=stashcode,dimlst=dimlst,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=attrlst,option=option)
 	return(datset)
 
