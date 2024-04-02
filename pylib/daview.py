@@ -1914,7 +1914,7 @@ def xar_slice(data,dimnam,dim_min=None,dim_max=None,dim_skip=None):
 	return(data)
 
 def xar_ipw(datset,levdim,rhonam,humnam):
-	weighted_q = xar_qrhodh(datset,levdim,rhonam,humnam)
+	weighted_q = essio.xar_qrhodh(datset,levdim,rhonam,humnam)
 	data = weighted_q.sum(levdim)
         dataset=xarray.Dataset(
                 data_vars=dict(

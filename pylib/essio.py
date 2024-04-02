@@ -114,7 +114,7 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
 		if dimnam in cubeauxc:
 		   if len(interp_cube.coord(dimnam).points) is 1:
 		      cube=new_axis(interp_cube,dimnam)
-
+    		      print("load_cubes", cube.units)
     else:
     	cubedimlst=[coord.name() for coord in cubes.dim_coords]
     	cubeauxc=[coord.name() for coord in cubes.aux_coords]
@@ -176,17 +176,23 @@ def irx_cube_array(cube,varlst,dimlst=None,coords=None):
 	for var in varlst:
 		data1=cube.data
 		units=cube.units
+		#keys=cube.keys()
+		#print("keys",keys)
 		datset[var]=xarray.DataArray(data=data1,dims=dimlst,coords=coords,name=var)
 		datset[var].attrs['units'] = units
+		print("irx_cube_array",datset[var].attrs['units'])
 	return(datset)
 
 def irx_load_cubray(infile,varlst,dimlst=None,coords=None,callback=None,stashcode=None,ref_dim=None,option=2):
 	cube=iri_load_cubes(infile,cnst=varlst,callback=callback,stashcode=stashcode,option=option,dimlst=dimlst,ref_dim=ref_dim)
+	print("irx_load_cubray",cube)
 	#if lat is not None and lon is not None and lev is not  None:
 		#interp_cube=iri_regrid(cube,lat=lat,lon=lon,lev=lev)
 		#datset=irx_cube_array(interp_cube,varlst,dimlst=dimlst,coords=coords)
 	#else:
 	datset=irx_cube_array(cube,varlst,dimlst=dimlst,coords=coords)
+	for var in varlst:
+		print("units", datset[var].attrs['units'])
 	return(datset)
 
 
@@ -384,7 +390,7 @@ def xar_qrhodh(datset,levdim,rhonam,humnam):
 	if "density" in datset:
 		rhodata=datset["density"]
 	else:
-		rhodata=xar_quot_rsqure(datset[rhonam],rhonam,levdim)
+		rhodata=xar_quot_rsqure(datset,rhonam,levdim)
 	if humnam in datset: qdata=datset[humnam]
 	thickness=xar_layer_thickness(qdata,levdim)
 	#qdata = xar_slice(qdata,levdim,None, -1)
@@ -517,10 +523,12 @@ def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None
 			#if refvar is None: datset[1]
 			ref_dim=xar_ref_dim(datset,refvar)
 		datnew=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option,diagflg=diagflg)
-		#print(datnew)
 		for varnam in varlst:
 			datset.update({varnam:(dimlst,datnew[varnam])})
-	#print(datset)
+			datset[varnam].attrs.update(datnew[varnam].attrs)
+			print("datnew in datset_extend",datnew[varnam].attrs['units'])
+                	print("datset in datset_extend", datset[varnam].attrs['units'])
+	#print("datset in datset_extend",datset)
 	return(datset)
 
 def datset_build(filepath,filefldr,varfile,varlst,varstash,varopt,dimlst,datset=None):
