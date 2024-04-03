@@ -80,15 +80,15 @@ def pyg_get_levs(infile):
 	levlst =[]
 	for g in gr:
 	    levlst.append(g.level)
-	print(levlst)
+	#print(levlst)
 	levlst=numpy.array(levlst)
-	print(levlst)
+	#print(levlst)
 	return(levlst)
 
 def pyg_datset_attr(datset,grbmsg,varnam,attrlst=None,attrs=None):
 	if attrlst is None: attrlst=grbmsg.keys()
 	if attrs is None: attrs=datset[varnam].attrs
-	print(grbmsg)
+	#print(grbmsg)
 	for attrnam in attrlst:
 		print(attrnam)
 		#attrnam=str(attrnam)
@@ -100,7 +100,7 @@ def pyg_datset_attr(datset,grbmsg,varnam,attrlst=None,attrs=None):
                				value = None
 				attrs.update({attrnam:value})
 	datset[varnam].attrs=attrs
-	print(datset)
+	#print(datset)
 	return(datset)
 
 def pyg_read_file(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dimlst=None,attrlst=None):
@@ -122,7 +122,7 @@ def pyg_read_file(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dim
 		coords.update({"lat":lats2d[:,0]})
 		coords.update({"lon":lons2d[0,:]})
 		attrlst=grbmsg.__getattr__
-		print(attrlst)
+		#print(attrlst)
 		if dimlst is None: dimlst=coords.keys()	
 		datset[varnam]=xarray.DataArray(data=data1,dims=dimlst,coords=coords,name=varnam)
 		#datset=pyg_datset_attr(datset,grbmsg,varnam)
@@ -310,14 +310,25 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
+def xar_geoloc(lats,lons):
+	midx = pd.MultiIndex.from_product([lats,lons])
+	midx_coords = xarray.Coordinates.from_pandas_multiindex(midx, "x")
+	datset=xarray.Dataset(coords=midx_coords)
+	return(datset)
+
 def xar_dimsize(datset,dimlst):
 	dimsize={}
 	for dimnam in dimlst:
-		dimsize.update({dimnam:len(datset.variables[dimnam])})
+		if isinstance(dimlst, dict):
+			dimlen=dimlst[dimnam]
+		else:
+			dimlen=len(datset.variables[dimnam])
+		dimsize.update({dimnam:dimlen})
 	return(dimsize)
 	
 def xar_dims_update(dimsize,recdim,recsize):
-	dimsize.update({recdim:recsize})
+	if dimsize[recdim] is not recsize:
+		dimsize.update({recdim:recsize})
 	return(dimsize)
 
 def xar_dimlst(datset):
@@ -352,37 +363,44 @@ def xar_data_dummy(dimsize,dimlst):
 	data=numpy.zeros(size_tuple)
 	return(data)
 
-def xar_rec_coords_update(datset,recdim,recrds=None,recmeta=None,reclen=None,recgap=None,varlst=None,dimlst=None):
-	if dimlst is None: dimlst=xar_dimlst(datset)
-	if varlst is None: varlst=xar_varlst(datset)
+def xar_rec_coords_update(datvar,recdim,recrds=None,recmeta=None,reclen=None,recgap=None,varlst=None,dimlst=None):
+	if dimlst is None: dimlst=xar_dimlst(datvar)
+	if varlst is None: varlst=xar_varlst(datvar)
 	if recrds is None:
 		if recdim in recmeta.coords: 
 			rec1=recmeta.coords[recdim].values
 			recz=rec1+(reclen*recgap)
-			recrds=numpy.arange(rec1,recz,recgap)
 		else:
-			recrds=numpy.arange(0,reclen)
-	coords=datset.coords
-	coords.update({recdim:recrds,})
+			rec1=0
+			recz=reclen
+			recgap=1
+	recrds=numpy.arange(rec1,recz,recgap)
+	recdimset=eval(eval('str({ recdim : list(recrds) })'))
+	coords=datvar.coords
+	coords.update(recdimset)
 	if recmeta is not None:
 		for dimnam in dimlst:
 			if dimnam is not recdim:
 				dimcoord=recmeta.coords[dimnam]
 				coords.update({dimnam:dimcoord,})
-	return(datset)
+	return(datvar)
 
-def xar_datset_dummy(recmeta,recdim,reclen,recrds=None,recgap=None,dimsize=None,dimlst=None,varlst=None):
+def xar_datset_dummy(recmeta,recdim,reclen,recrds=None,recgap=None,dimsize=None,coords=None,dimlst=None,varlst=None):
 	if dimlst is None: dimlst=xar_dimlst(recmeta)
 	if varlst is None: varlst=xar_varlst(recmeta)
+	if recdim not in dimlst:
+		#Defrosting 'Frozen' object
+		dimlst=dict(dimlst)
+		dimlst.update({recdim:reclen})
 	if dimsize is None:
 		dimsize=xar_dimsize(recmeta,dimlst)
 		dimsize=xar_dims_update(dimsize,recdim,reclen)
 	data1=xar_data_dummy(dimsize,dimlst)
-	data_vars={}
+	data1=xarray.DataArray(data=data1,coords=coords,dims=dimlst)
+	datset=xarray.Dataset()
 	for varnam in varlst:
-		data_vars.update({varnam:(dimlst,data1)})
-	datset=xarray.Dataset(data_vars=data_vars)
-	datset=xar_rec_coords_update(datset,recdim,recrds=recrds,recmeta=recmeta,reclen=reclen,recgap=recgap,varlst=varlst,dimlst=dimlst)
+		data1=xar_rec_coords_update(data1,recdim,recrds=recrds,recmeta=recmeta,reclen=reclen,recgap=recgap,varlst=varlst,dimlst=dimlst)
+		datset[varnam]=data1
 	return(datset)
 
 def xar_append(recmeta,reclen,recpoint=None,recdim=None,varlst=None,dimlst=None,dimsize=None,recrds=None,recgap=None,datset=None):
@@ -391,17 +409,14 @@ def xar_append(recmeta,reclen,recpoint=None,recdim=None,varlst=None,dimlst=None,
 	if datset is None: datset=xar_datset_dummy(recmeta,recdim,reclen,recrds=recrds,recgap=recgap,dimsize=dimsize,dimlst=dimlst,varlst=varlst)
 	if recdim in recmeta.coords: recpoint=recmeta[recdim].values[0]
 	slicedic=eval(eval('str({ recdim : recpoint })'))
-	print(slicedic)
-	print(datset)
+	#print(slicedic)
 	for varnam in varlst:
-		if recdim in recmeta.coords:
-			recdata=recmeta[varnam].loc[slicedic]
-		else:
-			recmeta[varnam].expand_dims(dim = slicedic, axis=0)
-			#coords=recmeta[varnam].coords
-			#coords.update({recdim:recpoint,})
-			recdata=recmeta[varnam]
-		print(recdata)
+		if recdim not in recmeta.coords:
+			recmeta[recdim]=(recdim,[recpoint])
+			recmeta[varnam]=recmeta[varnam].expand_dims(dim = slicedic, axis=0)
+			coords=recmeta[varnam].coords
+			dimlst=coords.keys()
+		recdata=recmeta[varnam].loc[slicedic]
 		datset[varnam].loc[slicedic] = recdata
 	return(datset)
 
