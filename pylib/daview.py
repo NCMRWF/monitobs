@@ -1918,12 +1918,15 @@ def xar_ipw(datset,levdim,rhonam,humnam):
 	data = weighted_q.sum(levdim)
         dataset=xarray.Dataset(
                 data_vars=dict(
-                        ipw=(["lat", "lon"], data),
+                        #ipw=(["lat", "lon"], data),
+                        ipw=data,
                                 ),
-                coords=dict(
-                        lon=datset[humnam].longitude.values,
-                        lat=datset[humnam].latitude.values,
-				),
+                #coords=dict(
+                        #lon=datset.longitude.values,
+                        #lat=datset.latitude.values,
+                        #lon=datset[humnam].longitude.values,
+                        #lat=datset[humnam].latitude.values,
+			#	),
 				)	
 	return(dataset)
 
@@ -1967,21 +1970,21 @@ def xar_plot_ose_scalar(plotdic):
 	plot=[None]*3
 	axlbly=[None]*3
 
-	plot[0]=result_ctl.plot(ax=axes[0],vmin=0,vmax=30, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+	plot[0]=result_ctl.plot(ax=axes[0], cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[0])
 	m.drawcoastlines()
 	axlbly[0]=axes[0].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes)
 	axins = inset_axes(axes[0], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[0].transAxes, borderpad = 0)
 	fig.colorbar(plot[0], cax = axins)	
 
-	plot[1]=result_exp.plot(ax=axes[1],vmin=0,vmax=30, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+	plot[1]=result_exp.plot(ax=axes[1], cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[1])
 	m.drawcoastlines()
 	axlbly[1]=axes[1].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes)
 	axins = inset_axes(axes[1], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[1].transAxes, borderpad = 0)
 	fig.colorbar(plot[1], cax = axins)	
 
-	plot[2]=result_diff.plot(ax=axes[2],vmin=-10,vmax=10, cmap='RdBu_r', transform=ccrs.PlateCarree(),add_colorbar=False)
+	plot[2]=result_diff.plot(ax=axes[2],vmin=-6,vmax=6, cmap='RdBu_r', transform=ccrs.PlateCarree(),add_colorbar=False)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[2])
 	m.drawcoastlines()
 	axlbly[2]=axes[2].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2].transAxes)
