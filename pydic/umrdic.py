@@ -3,11 +3,11 @@
 """
 The initial version of this file is derived from the UMRider Package developed at NCMRWF by Arulalan and team.
 
-Only dictionaries and global variable declarations of UMRide is available in this file. 
+Only dictionaries and static variable declarations of UMRider is available in this file. 
 
 Seperate Package for UMRider is available at https://github.com/NCMRWF/UMRider
 
-Functions available below are from g2utils/um2grb2.py file of the package
+Static variables and dictionaries available below are from g2utils/um2grb2.py file of the UMRider package.
 
 __author__ = 'arulalant'
 __version__ = 'v3.1.0'
