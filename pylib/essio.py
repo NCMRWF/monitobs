@@ -48,6 +48,68 @@ import pygrib
 import iris
 from iris.util import new_axis
 
+####################################################
+#import numpy.core.multiarray
+#import gribapi
+#import iris_grib
+### ImportError: No module named _multiarray_umath
+####################################################
+
+#############################################################################################################################
+### GribAPI and IRIS based functions
+#############################################################################################################################
+
+def read_grib(gribfile):
+	filtered_messages = []
+	for msg in iris_grib.message.GribMessage.messages_from_filename(gribfile):
+	    if msg.sections[4]['productDefinitionTemplateNumber'] is not None:
+		print(msg.sections[4]['productDefinitionTemplateNumber'])
+		print(msg.sections[4]['parameterNumber'])
+		print(msg.sections[4]['typeOfFirstFixedSurface'])
+		print(msg.sections[1])
+		print(msg.sections[3])
+		print(msg.sections[4])
+		print(msg.sections[5])
+		print(msg.sections[6])
+		print(msg.sections[7])
+		print(msg.sections[8])
+		filtered_messages.append(msg)
+	cubes_messages = iris_grib.load_pairs_from_fields(filtered_messages)
+	print(cubes_messages)
+	for cube, msg in cubes_messages:
+	   prod_stat = msg.sections[1]['productionStatusOfProcessedData']
+	   cube.attributes['productionStatusOfProcessedData'] = prod_stat
+	print(cube.attributes['productionStatusOfProcessedData'])
+		#msg.sections[4]['productDefinitionTemplateNumber']; 
+		#msg.sections[4]['parameterNumber']
+	#cubes = iris.load(gribfile)
+	#return(cubes)
+
+def cube_list(infile):
+	cubes = read_grib(infile)
+	cubes = list(cubes)
+	um2grb2.tweaked_messages(cubes)
+	return(cubes)
+
+def save_grib(gribfile,cubes):
+	iris.save(cubes, gribfile)
+
+def gri_load(fpath):
+    if os.path.isfile(fpath):
+        try:        
+            f = iris.load(fpath, callback=update_cf_standard_name) # load intermediate grib2 file
+        except gribapi.GribInternalError as e:
+            if str(e) == "Wrong message length":
+                print("ALERT!!!! ERROR!!! Couldn't read grib2 file to re-order", e)
+            else:
+                print("ALERT!!! ERROR!!! couldn't read grib2 file to re-order", e)
+            return 
+        except Exception as e:
+            print("ALERT!!! ERROR!!! couldn't read grib2 file to re-order", e)
+            return
+  	 
+        print("f = ", f)
+	return(f)
 
 #############################################################################################################################
 ### Pygrib based functions
@@ -127,6 +189,15 @@ def pyg_read_file(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dim
 		datset[varnam]=xarray.DataArray(data=data1,dims=dimlst,coords=coords,name=varnam)
 		#datset=pyg_datset_attr(datset,grbmsg,varnam)
 	return(datset)
+
+def pyg_write_file(datset,outfile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dimlst=None,attrlst=None):
+	with open(outfile, 'wb') as outgrb:
+		for varnam in varlst:
+			print(varnam)
+			outgrb.write(msg)
+	outgrb.close()
+	return(outfile)
+
 
 def pyg_extract(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dimlst=None,attrlst=None):
 	return(pyg_read_file(infile,indxkeys,indxfltr,varlst,coords,dimlst,attrlst))
