@@ -30,6 +30,15 @@ previous Update : 11-Mar-2016
 latest Update : 29-Aug-2016
 """
 
+CURR_PATH=os.path.dirname(os.path.abspath(__file__))
+PKGHOME=os.path.dirname(CURR_PATH)
+LIB=os.environ.get('LIB',PKGHOME+"/pylib")
+sys.path.append(LIB)
+DIC=os.environ.get('DIC',PKGHOME+"/pydic")
+sys.path.append(DIC)
+NML=os.environ.get('NML',PKGHOME+"/nml")
+sys.path.append(NML)
+import umrdic
 
 
 def getCubeAttr(tmpCube):
@@ -78,9 +87,9 @@ def _createDepthBelowLandSurfaceCoords1Lev(cube):
     # Dr. Saji / UM_Model_DOC suggested that UM produce Root zone soil model
     # level number is equivalent to 0 to 2m. (i.e. from 1 to 4 layer no)
     
-    global __soilFirstSecondFixedSurfaceUnit__ 
+    global umrdic.__soilFirstSecondFixedSurfaceUnit__ 
 
-    if __soilFirstSecondFixedSurfaceUnit__ == 'cm':
+    if umrdic.__soilFirstSecondFixedSurfaceUnit__ == 'cm':
         # So we kept here unit as 'cm'. But points are muliplied by
         # 100 with its  corresponding cm values. Why because, that 
         # 100 will be factorized (divied) in grib_message by setting 
@@ -90,7 +99,7 @@ def _createDepthBelowLandSurfaceCoords1Lev(cube):
         depth_below_land_surface = iris.coords.DimCoord(numpy.array([15000]), 
                          bounds=numpy.array([[0, 30000]]), units=Unit('cm'),
                                        long_name='depth_below_land_surface')
-    elif __soilFirstSecondFixedSurfaceUnit__ == 'mm':  
+    elif umrdic.__soilFirstSecondFixedSurfaceUnit__ == 'mm':  
         # We kept here unit as 'mm'. But points are muliplied by
         # 1000 with its  corresponding cm values. Why because, that 
         # 1000 will be factorized (divied) in grib_message by setting 
@@ -114,9 +123,9 @@ def _updateDepthBelowLandSurfaceCoords4Levs(depth_below_land_surface):
     # Dr. Saji / UM_Model_DOC suggested that UM produce soil model
     # level number is equivalent to 10cm, 35cm, 1m & 2m. 
     
-    global __soilFirstSecondFixedSurfaceUnit__ 
+    global umrdic.__soilFirstSecondFixedSurfaceUnit__ 
 
-    if __soilFirstSecondFixedSurfaceUnit__ == 'cm':
+    if umrdic.__soilFirstSecondFixedSurfaceUnit__ == 'cm':
         # So we kept here unit as 'cm'. But points are muliplied by
         # 100 with its  corresponding cm values. Why because, that 
         # 100 will be factorized (divied) in grib_message by setting 
@@ -138,7 +147,7 @@ def _updateDepthBelowLandSurfaceCoords4Levs(depth_below_land_surface):
         depth_below_land_surface.bounds = numpy.array([[0, 1000], 
                                    [1000, 3500], [3500,10000],[10000,30000]])
         depth_below_land_surface.units = Unit('cm')
-    elif __soilFirstSecondFixedSurfaceUnit__ == 'mm':
+    elif umrdic.__soilFirstSecondFixedSurfaceUnit__ == 'mm':
         # Here we kept unit as 'mm'. But points are muliplied by
         # 1000 with its  corresponding mm values. Why because, that 
         # 1000 will be factorized (divied) in grib_message by setting 
