@@ -7,6 +7,8 @@ Only dictionaries and global variable declarations of UMRide is available in thi
 
 Seperate Package for UMRider is available at https://github.com/NCMRWF/UMRider
 
+Functions available below are from g2utils/um2grb2.py file of the package
+
 __author__ = 'arulalant'
 __version__ = 'v3.1.0'
 __long_name__ = 'NCUM Parallel Rider'
