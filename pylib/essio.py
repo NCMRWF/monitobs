@@ -47,11 +47,12 @@ import xarray
 import pygrib
 import iris
 from iris.util import new_axis
+import iris_grib
+import umrlib
 
 ####################################################
 #import numpy.core.multiarray
 #import gribapi
-#import iris_grib
 ### ImportError: No module named _multiarray_umath
 ####################################################
 
@@ -82,13 +83,13 @@ def read_grib(gribfile):
 	print(cube.attributes['productionStatusOfProcessedData'])
 		#msg.sections[4]['productDefinitionTemplateNumber']; 
 		#msg.sections[4]['parameterNumber']
-	#cubes = iris.load(gribfile)
-	#return(cubes)
+	cubes = iris.load(gribfile)
+	return(cubes)
 
 def cube_list(infile):
 	cubes = read_grib(infile)
 	cubes = list(cubes)
-	um2grb2.tweaked_messages(cubes)
+	umrlib.tweaked_messages(cubes)
 	return(cubes)
 
 def save_grib(gribfile,cubes):
@@ -107,7 +108,6 @@ def gri_load(fpath):
         except Exception as e:
             print("ALERT!!! ERROR!!! couldn't read grib2 file to re-order", e)
             return
-  	 
         print("f = ", f)
 	return(f)
 
@@ -194,8 +194,10 @@ def pyg_write_file(datset,outfile,indxkeys=None,indxfltr=None,varlst=None,coords
 	with open(outfile, 'wb') as outgrb:
 		for varnam in varlst:
 			print(varnam)
+			datstring=""
+			msg = pygrib.fromstring(datstring)
 			outgrb.write(msg)
-	outgrb.close()
+		#outgrb.close()
 	return(outfile)
 
 

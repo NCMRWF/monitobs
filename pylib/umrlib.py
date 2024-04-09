@@ -29,7 +29,7 @@ Author : Arulalan.T
 previous Update : 11-Mar-2016
 latest Update : 29-Aug-2016
 """
-
+import os,sys
 CURR_PATH=os.path.dirname(os.path.abspath(__file__))
 PKGHOME=os.path.dirname(CURR_PATH)
 LIB=os.environ.get('LIB',PKGHOME+"/pylib")
@@ -39,6 +39,10 @@ sys.path.append(DIC)
 NML=os.environ.get('NML',PKGHOME+"/nml")
 sys.path.append(NML)
 import umrdic
+import multiprocessing as mp
+import multiprocessing.pool as mppool       
+
+_soilFirstSecondFixedSurfaceUnit__ = umrdic.__soilFirstSecondFixedSurfaceUnit__
 
 
 def getCubeAttr(tmpCube):
@@ -87,9 +91,9 @@ def _createDepthBelowLandSurfaceCoords1Lev(cube):
     # Dr. Saji / UM_Model_DOC suggested that UM produce Root zone soil model
     # level number is equivalent to 0 to 2m. (i.e. from 1 to 4 layer no)
     
-    global umrdic.__soilFirstSecondFixedSurfaceUnit__ 
+    global __soilFirstSecondFixedSurfaceUnit__ 
 
-    if umrdic.__soilFirstSecondFixedSurfaceUnit__ == 'cm':
+    if __soilFirstSecondFixedSurfaceUnit__ == 'cm':
         # So we kept here unit as 'cm'. But points are muliplied by
         # 100 with its  corresponding cm values. Why because, that 
         # 100 will be factorized (divied) in grib_message by setting 
@@ -99,7 +103,7 @@ def _createDepthBelowLandSurfaceCoords1Lev(cube):
         depth_below_land_surface = iris.coords.DimCoord(numpy.array([15000]), 
                          bounds=numpy.array([[0, 30000]]), units=Unit('cm'),
                                        long_name='depth_below_land_surface')
-    elif umrdic.__soilFirstSecondFixedSurfaceUnit__ == 'mm':  
+    elif __soilFirstSecondFixedSurfaceUnit__ == 'mm':  
         # We kept here unit as 'mm'. But points are muliplied by
         # 1000 with its  corresponding cm values. Why because, that 
         # 1000 will be factorized (divied) in grib_message by setting 
@@ -123,9 +127,9 @@ def _updateDepthBelowLandSurfaceCoords4Levs(depth_below_land_surface):
     # Dr. Saji / UM_Model_DOC suggested that UM produce soil model
     # level number is equivalent to 10cm, 35cm, 1m & 2m. 
     
-    global umrdic.__soilFirstSecondFixedSurfaceUnit__ 
+    global __soilFirstSecondFixedSurfaceUnit__ 
 
-    if umrdic.__soilFirstSecondFixedSurfaceUnit__ == 'cm':
+    if __soilFirstSecondFixedSurfaceUnit__ == 'cm':
         # So we kept here unit as 'cm'. But points are muliplied by
         # 100 with its  corresponding cm values. Why because, that 
         # 100 will be factorized (divied) in grib_message by setting 
@@ -147,7 +151,7 @@ def _updateDepthBelowLandSurfaceCoords4Levs(depth_below_land_surface):
         depth_below_land_surface.bounds = numpy.array([[0, 1000], 
                                    [1000, 3500], [3500,10000],[10000,30000]])
         depth_below_land_surface.units = Unit('cm')
-    elif umrdic.__soilFirstSecondFixedSurfaceUnit__ == 'mm':
+    elif __soilFirstSecondFixedSurfaceUnit__ == 'mm':
         # Here we kept unit as 'mm'. But points are muliplied by
         # 1000 with its  corresponding mm values. Why because, that 
         # 1000 will be factorized (divied) in grib_message by setting 
@@ -247,6 +251,171 @@ def _convert2WEASD(cube):
     # end of if cube.standard_name == 'snowfall_amount':
 # end of def _convert2WEASD(cube):
 
+    
+def renameVar(cube, varName, varSTASH):
+    if (varName, varSTASH) in [
+		('x_wind', 'm01s03i225'), # 10meter B-Grid U component wind
+			]: 
+		cube.long_name = 'zonal wind at 10 m height'
+    if (varName, varSTASH) in [
+		('y_wind', 'm01s03i226'), # 10meter B-Grid V component wind
+			]: cube.long_name = 'meridional wind at 10 m height'
+    if (varName, varSTASH) in [
+		('x_wind', 'm01s15i212'),  # 50meter B-Grid U component wind 
+			]: cube.long_name = 'zonal wind at 50 m height'
+    if (varName, varSTASH) in [
+		('y_wind', 'm01s15i213'),  # 50meter B-Grid V component wind     
+			]: cube.long_name = 'meridional wind at 50 m height'
+    print(varName, varSTASH, cube.standard_name, cube.long_name)
+    return(cube)
+
+
+def tweaked_messages(cubeList):
+    global _ncmrGrib2LocalTableVars_, _aod_pseudo_level_var_, __UMtype__, \
+           __setGrib2TableParameters__, __soilFirstSecondFixedSurfaceUnit__           
+    
+    for cube in cubeList:
+        for cube, grib_message in iris.fileformats.grib.as_pairs(cube): #save_pairs_from_cube(cube):
+            print "Tweaking begin ", cube.standard_name
+            # post process the GRIB2 message, prior to saving
+            gribapi.grib_set_long(grib_message, "centre", 29) # RMC of India
+            gribapi.grib_set_long(grib_message, "subCentre", 0) # No subcentre
+            print "reset the centre as 29"
+            if cube.coord("forecast_period").bounds is not None:        
+                # if we set bounds[0][0] = 0, wgrib2 gives error for 0 fcst time.
+                # so we need to set proper time intervals 
+                # (typeOfTimeIncrement) as 2 as per below table.
+                # http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table4-11.shtml
+                # fileformats/grib/_save_rules.py-> set_forecast_time() ->
+                # _non_missing_forecast_period() returns 'fp' as bounds[0][0]. 
+                # but mean while lets fix by setting typeOfTimeIncrement=2.
+                # http://www.cosmo-model.org/content/model/documentation/grib/pdtemplate_4.11.htm 
+                gribapi.grib_set(grib_message, "typeOfTimeIncrement", 2)           
+                print 'reset typeOfTimeIncrement as 2 for', cube.standard_name
+                
+                if __UMtype__ == 'regional':
+                    # fixing floating precesion point problem
+                    forecast_period = cube.coords('forecast_period')[0]
+                    forecast_period.points = numpy.round(forecast_period.points, 3)
+                    forecast_period.bounds = numpy.round(forecast_period.bounds, 3)
+                    print "forecast_period = ", forecast_period
+                # end of if __UMtype__ == 'regional':
+                
+            # end of if cube.coord("forecast_period").bounds is not None:
+            if cube.coords('depth_below_land_surface') or cube.coords('depth'):                
+                if __soilFirstSecondFixedSurfaceUnit__ == 'cm':
+                    # scaleFactorOfFirstFixedSurface as 2, equivalent to divide
+                    # the depth_below_land_surface.points by 100. So that we can 
+                    # be sure that grib2 has 0.1m, 0.35m, 1m & 3m. Otherwise, we 
+                    # will endup with 0m, 0m, 1m & 3m and finally will loose 
+                    # information about decimal values of levels.
+                    gribapi.grib_set(grib_message, "scaleFactorOfFirstFixedSurface", 2)
+                    gribapi.grib_set(grib_message, "scaleFactorOfSecondFixedSurface", 2)
+                    print "reset scaleFactorOfFirstFixedSurface as 2"
+                    print "reset scaleFactorOfSecondFixedSurface as 2"
+                elif __soilFirstSecondFixedSurfaceUnit__ == 'mm':
+                    # scaleFactorOfFirstFixedSurface as 3, equivalent to divide
+                    # the depth_below_land_surface.points by 1000. So that we can 
+                    # be sure that grib2 has 0.1m, 0.35m, 1m & 3m. Otherwise, we 
+                    # will endup with 0m, 0m, 1m & 3m and finally will loose 
+                    # information about decimal values of levels.
+                    gribapi.grib_set(grib_message, "scaleFactorOfFirstFixedSurface", 3)
+                    gribapi.grib_set(grib_message, "scaleFactorOfSecondFixedSurface", 3)
+                    print "reset scaleFactorOfFirstFixedSurface as 3"
+                    print "reset scaleFactorOfSecondFixedSurface as 3"
+                # end of if __soilFirstSecondFixedSurfaceUnit__ == 'cm':
+            # end of if cube.coords('depth_below_land_surface'):    
+            if cube.standard_name or cube.long_name:
+                if cube.standard_name:
+                    loc_longname = None
+                    if cube.standard_name.startswith('air_pressure_at_sea_level'):
+                        # we have to explicitly re-set the type of first fixed
+                        # surfcae as Mean sea level (101)
+                        gribapi.grib_set(grib_message, "typeOfFirstFixedSurface", 101) 
+                    if cube.standard_name.startswith('toa'):
+                        # we have to explicitly re-set the type of first surfcae
+                        # as Nominal top of the atmosphere i.e. 8 (WMO standard)
+                        gribapi.grib_set(grib_message, "typeOfFirstFixedSurface", 8) 
+                    # end of if cube.standard_name.startswith('toa'): 
+                    if cube.standard_name.startswith('tropopause'):
+                        # we have to explicitly re-set the type of first surfcae
+                        # as tropopause i.e. 7 (WMO standard)
+                        gribapi.grib_set(grib_message, "typeOfFirstFixedSurface", 7) 
+                    # end of if cube.standard_name.startswith('tropopause'): 
+                # end of if cube.standard_name:
+
+                if cube.long_name: 
+                    aod_name = _aod_pseudo_level_var_.keys()[0]
+                    if cube.long_name.startswith(aod_name):
+                        # we have to explicitly re-set the type of first surfcae
+                        # as surfaced (1) and type of second fixed surface as 
+                        # tropopause (7) as per WMO standard, for the aod var.
+                        gribapi.grib_set(grib_message, "typeOfFirstFixedSurface", 1)
+                        gribapi.grib_set(grib_message, "typeOfSecondFixedSurface", 7) 
+                        print "Set typeOfFirstFixedSurface as 1 and typeOfSecondFixedSurface as 7 to aod"
+                    # end of if cube.long_name.startswith(aod_name):
+                    # check for long name in _ncmrGrib2LocalTableVars_
+                    loc_longname = [1 for lname in _ncmrGrib2LocalTableVars_ if cube.long_name.startswith(lname)]
+                # end of if cube.long_name: 
+                
+                # here str conversion is essential to avoid checking 'cloud' in None
+                # (for long_name in some case), which will throw error.
+                if 'cloud' in str(cube.standard_name) or 'cloud' in str(cube.long_name) or 'ligtning' in str(cube.long_name):
+                    # we have to explicitly re-set the type of first surfcae
+                    # as surfaced (1) and type of second fixed surface as 
+                    # as Nominal top of the atmosphere i.e. 8 (WMO standard)
+                    gribapi.grib_set(grib_message, "typeOfFirstFixedSurface", 1)
+                    gribapi.grib_set(grib_message, "typeOfSecondFixedSurface", 8) 
+                # end of if 'cloud' in cube.long_name or 'cloud':
+                
+                if cube.standard_name in _ncmrGrib2LocalTableVars_ or loc_longname:
+                    # We have to enable local table version and disable the 
+                    # master table only the special variables.
+                    # http://www.cosmo-model.org/content/model/documentation/grib/grib2keys_1.htm 
+                    # Above link says that tablesVersion must be set to 255, 
+                    # then only local table will be enabled.
+                    gribapi.grib_set_long(grib_message, "tablesVersion", 255)
+                    # http://apt-browse.org/browse/debian/wheezy/main/i386/libgrib-api-1.9.16/1.9.16-2%2Bb1/file/usr/share/grib_api/definitions/grib2/section.1.def (line no 42)
+                    # Above link says versionNumberOfGribLocalTables is alias 
+                    # of LocalTablesVersion.        
+                    # Set local table version number as 1 as per 
+                    # ncmr_grib2_local_table standard.
+                    gribapi.grib_set_long(grib_message, "versionNumberOfGribLocalTables", 1)
+                # end of if cube.standard_name in _ncmrGrib2LocalTableVars_:
+            # end of if cube.standard_name or ...:
+            if __setGrib2TableParameters__:
+                # This user defined parameters must be at last of this function!
+                for key, val in __setGrib2TableParameters__:
+                    gribapi.grib_set_long(grib_message, key, val)
+                    print "set user defined grib2table parameter ('%s', %s)" % (key, val)
+            # end of if __setGrib2TableParameters__:
+            print "Tweaking end ", cube.standard_name
+            
+            yield grib_message
+        # end of for cube, grib_message in iris.fileformats.grib.save_pairs_from_cube(cube):
+    # end of for cube in cubeList:
+# end of def tweaked_messages(cube):
+
+
+
+def substringcheck(string, sub_str):
+    if (string.find(sub_str) == -1):
+        result=False
+    else:
+        result=True
+    return(result)
+
+def rename_gribvar(name,fpath):
+    if substringcheck(fpath,"toa"):
+	name=name.replace("surface_downwelling_shortwave_flux_in_air","toa_incoming_shortwave_flux")
+	name=name.replace("surface_upwelling_longwave_flux_in_air","toa_outgoing_longwave_flux")
+	name=name.replace("surface_net_downward_shortwave_flux","toa_outgoing_shortwave_flux")
+	#name=name.replace("surface_upwelling_shortwave_flux_in_air","toa_outgoing_shortwave_flux")
+	#name=name.replace("surface_net_downward_shortwave_flux","toa_net_downward_shortwave_flux")
+	name=name.replace("surface","toa")
+    if substringcheck(fpath,"skin"):
+	name=name.replace("air_temperature","surface_temperature")
+    return(name)
 
 ################################################################################################
 ###
