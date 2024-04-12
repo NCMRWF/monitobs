@@ -12,7 +12,7 @@ Created on Wed Oct 12 15:45:39 2021
 from __future__ import print_function
 import traceback
 import sys,os
-from eccodes import *
+#from eccodes import *
 import pandas
 import numpy
 import collections

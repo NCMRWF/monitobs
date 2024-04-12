@@ -876,6 +876,8 @@ def obstore_read_batch_elements(obsfile,obsidx,nmlfile=NML_OBS_INDX,maxindx=MAXI
     cdc_sortlist=obslib.binsort(cdc_sortlist,missing=0.)
     cdc_sortlist=obslib.binsort(cdc_sortlist,binmin=1.0)
     subtype=obstore_read_subtype(obsfile)[obsidx-1]
+    cdc_sortlist=obslib.unique_list(cdc_sortlist)
+    #print(cdc_sortlist)
     for i in cdc_sortlist:
       idx_arr=numpy.where(cdc == i)[0]
       if idx_arr.size > 0:
@@ -1376,15 +1378,18 @@ def obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX
                 elistgroup[indx-1]=elist
                 count=0
                 elenams=elist.Element.values
+		#print(elist)
                 for element in elenams:
                     elemdata = obstore_read_data_element(infile,nmlfile,indx,element)
                     if elemdata is not None:
                         count+=1
                         if count == 1:
-                            location=elemdata
+                            data=elemdata
                         else:
-                            location=location.join(elemdata)
-                datagroup[indx-1]=location
+			    #print(elemdata)
+                            data=data.join(elemdata)
+			    #print(data)
+                datagroup[indx-1]=data
     dataset={"obsgroup":obsgroup, "subtype":subtypegroup, "data":datagroup }
     return(dataset)
 

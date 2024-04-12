@@ -8,6 +8,7 @@ PKGNAM=${PKGHOME##*/}
 JOBSDIR="${PKGHOME}/jobs"
 
 export JOBSCRIPT=$1
+export JOBSCRIPT=$(which ${JOBSCRIPT})
 export HOSTPKG=${JOBSCRIPT%/jobs/*}
 TYPE=${JOBSCRIPT##*.}
 if [[ ${TYPE} == "py" ]]; then

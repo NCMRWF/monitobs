@@ -263,6 +263,10 @@ def binsort(a,binmin=numpy.NINF,binmax=numpy.inf,missing=numpy.nan):
     temp.sort()
     return(temp)
 
+def unique_list(list1):
+	uniquelst=list(set(list1))
+	return(uniquelst)
+
 def unique_int(array,missing=numpy.nan):
     intlst=[]
     for elem in array:
@@ -1011,9 +1015,10 @@ def get_key_dic(keyinfofile,keylist,infodic=None):
     	for key in keylist:
     		infodic[key]=get_key_info(keyinfofile,key)
    else:
+	print("Key Info Namelist File is not available")
 	#print("File not found: "+keyinfofile)
-    	srcdic=obsdic.obstype[obstype]
-    	infodic=srcdic.copy()
+    	#srcdic=obsdic.obstype[obstype]
+    	#infodic=srcdic.copy()
    return(infodic)
 
 def get_elist(obstypnam,obstypnml,keynml):
