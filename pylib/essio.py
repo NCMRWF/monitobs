@@ -210,7 +210,7 @@ def pyg_extract(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dimls
 ### IRIS based functions
 #############################################################################################################################
 
-def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst=None,ref_dim=None,time_cnstlst=None,ind=None):
+def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst=None,ref_dim=None,time_cnstlst=None,domain=None):
     opt=str(option)
     if stashcode is not None: cnst=iris.AttributeConstraint(STASH=stashcode)
     switcher = {
@@ -244,14 +244,18 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
 		     cubes=new_axis(cubes,dimnam)
     #print(cube)
     if time_cnstlst is not None:
-	t1 = time_cnstlst[0]
-	print("t1 is",t1)
-	t2 = time_cnstlst[1]
-	print("t2 is",t2)
-	cubes=cubes[t1:t2]
+	timemin = time_cnstlst[0]
+	print("t1 is",timemin)
+	timemax = time_cnstlst[1]
+	print("t2 is",timemax)
+	cubes=cubes[timemin:timemax]
 	print(cubes)
-    if ind is not None:
-	cubes=cubes.intersection(longitude=(30,120),latitude=(-15,45))
+    if domain is not None:
+	latmin=domain.latmin
+	latmax=domain.latmax
+	lonmin=domain.lonmin
+	lonmax=domain.lonmax
+	cubes=cubes.intersection(longitude=(lonmin,lonmax),latitude=(latmin,latmax))
 	#cubes=iris.Constraint(time=lambda cell: pdt1 <= cell.point < pdt2)
     return(cubes)
 
@@ -703,6 +707,9 @@ def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=No
     	}
 	func = switcher.get(str(option), lambda: 'Invalid option : '+str(option) )
 	datset = func()
+	##############################
+	### Slice code
+	##############################
 	if outpath is not None: outfile=datset_save(datset,outpath,outfile,infile,diagflg=diagflg)
 	return(datset)
 
