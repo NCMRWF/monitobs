@@ -398,7 +398,7 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
-def xar_regrid(datary,lon=None,lat=None,lev=None):
+def xar_regrid(data,lon=None,lat=None,lev=None):
 	if lon is None: lon=numpy.arange(0.0,360.0,1)
 	if lat is None: lat=numpy.arange(-90.0,90.0,1)
 	data=data.interp(latitude=lat, longitude=lon)
@@ -665,10 +665,9 @@ def datset_regrid(datset,varname,refer=None,lon=None,lat=None,lev=None):
 		lat = datset[refer].latitude
 		#lev = datset[refer].level_height
 	data= datset[varname]
-	datanew=datanew=xar_regrid(datary,lon=None,lat=None,lev=None)
+	datanew=xar_regrid(datary,lon=None,lat=None,lev=None)
         datset[varname] = datanew	
 	return(datset)
-
 
 def datset_print(datset,diagflg=1,varlst=None,dimlst=None):
 	xar_print(datset,diagflg=diagflg,varlst=varlst,dimlst=dimlst)
