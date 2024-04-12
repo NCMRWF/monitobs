@@ -1930,25 +1930,6 @@ def xar_ipw(datset,levdim,rhonam,humnam):
 				)	
 	return(dataset)
 
-def xar_regrid(datset,varname,refer=None,q=None,lon=None,lat=None,lev=None):
-	if refer is not None:
-	   if datset[refer] is not None:
-		lon = datset[refer].longitude
-		lat = datset[refer].latitude
-		#lev = datset[refer].level_height
-	data= datset[varname]
-	datanew=data.interp(latitude=lat, longitude=lon)
-	#datanew = datanew.interp(level_height=lev)
-        #new_datset = datset.copy()
-        datset[varname] = datanew	
-	#datset[varname]=datanew
-	#if varname=="x_wind_int":
-		#datset[varname] = datset['x_wind'].interp(latitude=lat, longitude=lon)
-	#else:
-		#datset[varname] = datset['y_wind'].interp(latitude=lat, longitude=lon)
-	return(datset)
-
-
 
 def xar_plot_ose_scalar(plotdic):
 	data_ctl=plotdic["data_ctl"]

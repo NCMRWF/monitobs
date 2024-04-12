@@ -383,6 +383,22 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
+
+def xar_regrid(datset,varname,refer=None,lon=None,lat=None,lev=None):
+	if refer is not None:
+	   if datset[refer] is not None:
+		lon = datset[refer].longitude
+		lat = datset[refer].latitude
+		#lev = datset[refer].level_height
+	if lon is None: lon=numpy.arange(0.0,360.0,1)
+	if lat is None: lat=numpy.arange(-90.0,90.0,1)
+	data= datset[varname]
+	datanew=data.interp(latitude=lat, longitude=lon)
+	#datanew = datanew.interp(level_height=lev)
+        #new_datset = datset.copy()
+        datset[varname] = datanew	
+	return(datset)
+
 def xar_geoloc(lats,lons):
 	midx = pd.MultiIndex.from_product([lats,lons])
 	midx_coords = xarray.Coordinates.from_pandas_multiindex(midx, "x")
