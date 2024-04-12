@@ -1948,11 +1948,22 @@ def xar_plot_ose_scalar(plotdic,axes=None):
 	plotfile=plotdic["plotfile"]
 	axlbl_y_ctl=plotdic["ctlname"]
 	axlbl_y_exp=plotdic["expname"]
-	#plotvar=plotdic["varname"]
+	plotvar=plotdic["varname"]
 	
-	result_ctl = data_ctl
-	result_exp = data_exp
-	result_diff = result_exp - result_ctl
+	#result_ctl = data_ctl
+	#result_exp = data_exp
+	#result_diff = result_exp - result_ctl
+	result_ctl = data_ctl[plotvar]
+	result_exp = data_exp[plotvar]
+	result_d = data_exp - data_ctl
+	print(result_d)
+	#result_dat=result_d.to_dataset(name=plotvar)
+	#print(result_dat)
+	result_regrid = essio.xar_regrid(result_d,plotvar)
+	print(result_regrid)
+	result_diff = result_regrid[plotvar]
+	#result_diff=result_regrid[plotvar]
+	#print(result_diff)
 	#ipw_ctl = data_ctl.ipw
 	#ipw_exp = data_exp.ipw
 	#data_diff = data_exp - data_ctl

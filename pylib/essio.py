@@ -50,8 +50,6 @@ from iris.util import new_axis
 import iris_grib
 import umrlib
 
-<<<<<<< HEAD
-=======
 ####################################################
 #import numpy.core.multiarray
 #import gribapi
@@ -113,7 +111,6 @@ def gri_load(fpath):
         print("f = ", f)
 	return(f)
 
->>>>>>> 5d3ec0aab388fe94b17797b390b9ddd913e49e5d
 #############################################################################################################################
 ### Pygrib based functions
 #############################################################################################################################
@@ -776,3 +773,24 @@ def datset_build(filepath,varfile,varlst,varstash,varopt,dimlst,indxkeys=None,in
 		datset=datset_extend(infiles,[varnam],datset=datset,stashcode=stashcode,dimlst=dimlst,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=attrlst,option=option)
 	return(datset)
 
+
+def coupled_pentad(files,varnam,dimlst,time_cnstlst):
+	day=[]
+	for i,(t1,t2) in enumerate(time):
+        	data =[]
+        	for file in files:
+                	datset=essio.datset_extract(file,["precipitation_flux"],dimlst=["time","latitude","longitude"],time_cnstlst=[t1,t2])
+                	print(rain_ctl)
+               		datset_ex =datset.sel(longitude=slice(30,120),latitude=slice(-15,45))
+	                datset_mean = datset_ex.mean(dim="time",keep_attrs=True)
+	                out_ctl = plotdir+'/precipitation_mem1_16_'+str(t1)+'to'+str(t2)+'days_ctl.nc'
+	                datset_day = datset_mean[varnam] * 86400
+	                data.append(rain_ctl_day)
+	                print("appended list for rain_ctl_day",data)
+	        datset_day_c = xr.concat(data,dim = 'time')
+	        print("concated list for rain_ctl_day",rain_ctl_day_c)
+	        datset_day_mean = datset_day_c.mean(dim="time",keep_attrs=True)
+	        day.append(datset_day_mean)
+	print("appended in day_ctl",day)
+	day_con = xr.concat(day,dim = 'time')
+	print(day_con)
