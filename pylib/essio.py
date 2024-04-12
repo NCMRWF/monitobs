@@ -383,21 +383,12 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
-
-def xar_regrid(datset,varname,refer=None,lon=None,lat=None,lev=None):
-	if refer is not None:
-	   if datset[refer] is not None:
-		lon = datset[refer].longitude
-		lat = datset[refer].latitude
-		#lev = datset[refer].level_height
+def xar_regrid(datary,lon=None,lat=None,lev=None):
 	if lon is None: lon=numpy.arange(0.0,360.0,1)
 	if lat is None: lat=numpy.arange(-90.0,90.0,1)
-	data= datset[varname]
-	datanew=data.interp(latitude=lat, longitude=lon)
+	data=data.interp(latitude=lat, longitude=lon)
 	#datanew = datanew.interp(level_height=lev)
-        #new_datset = datset.copy()
-        datset[varname] = datanew	
-	return(datset)
+	return(data)
 
 def xar_geoloc(lats,lons):
 	midx = pd.MultiIndex.from_product([lats,lons])
@@ -637,6 +628,18 @@ def datset_vimt(filepath=None,filefldr=None,varfile=None,varlst=None,varstash=No
 #############################################################################################################################
 ### General functions
 #############################################################################################################################
+
+def datset_regrid(datset,varname,refer=None,lon=None,lat=None,lev=None):
+	if refer is not None:
+	   if datset[refer] is not None:
+		lon = datset[refer].longitude
+		lat = datset[refer].latitude
+		#lev = datset[refer].level_height
+	data= datset[varname]
+	datanew=datanew=xar_regrid(datary,lon=None,lat=None,lev=None)
+        datset[varname] = datanew	
+	return(datset)
+
 
 def datset_print(datset,diagflg=1,varlst=None,dimlst=None):
 	xar_print(datset,diagflg=diagflg,varlst=varlst,dimlst=dimlst)
