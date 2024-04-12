@@ -48,7 +48,6 @@ import pygrib
 import iris
 from iris.util import new_axis
 
-
 #############################################################################################################################
 ### Pygrib based functions
 #############################################################################################################################
@@ -137,7 +136,7 @@ def pyg_extract(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dimls
 ### IRIS based functions
 #############################################################################################################################
 
-def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst=None,ref_dim=None):
+def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst=None,ref_dim=None,time_cnstlst=None,ind=None):
     opt=str(option)
     if stashcode is not None: cnst=iris.AttributeConstraint(STASH=stashcode)
     switcher = {
@@ -159,8 +158,8 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
 	    for dimnam in dimlst:
 		if dimnam in cubeauxc:
 		   if len(interp_cube.coord(dimnam).points) is 1:
-		      cube=new_axis(interp_cube,dimnam)
-    		      print("load_cubes", cube.units)
+		      cubes=new_axis(interp_cube,dimnam)
+    		      print("load_cubes", cubes.units)
     else:
     	cubedimlst=[coord.name() for coord in cubes.dim_coords]
     	cubeauxc=[coord.name() for coord in cubes.aux_coords]
@@ -168,10 +167,19 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
 	   for dimnam in dimlst:
 	       if dimnam in cubeauxc:
 		  if len(cubes.coord(dimnam).points) is 1:
-		     cube=new_axis(cubes,dimnam)
+		     cubes=new_axis(cubes,dimnam)
     #print(cube)
-    
-    return(cube)
+    if time_cnstlst is not None:
+	t1 = time_cnstlst[0]
+	print("t1 is",t1)
+	t2 = time_cnstlst[1]
+	print("t2 is",t2)
+	cubes=cubes[t1:t2]
+	print(cubes)
+    if ind is not None:
+	cubes=cubes.intersection(longitude=(30,120),latitude=(-15,45))
+	#cubes=iris.Constraint(time=lambda cell: pdt1 <= cell.point < pdt2)
+    return(cubes)
 
 def iri_to_nc(infile,varlst,outfile,callback=None,stashcode=None,option=2,dimlst=None,coords=None):
 	cube=iri_load_cubes(infile,cnst=varlst,callback=callback,stashcode=stashcode,option=option,dimlst=dimlst)
@@ -218,8 +226,8 @@ def irx_cube_array(cube,varlst,dimlst=None,coords=None):
 		print("irx_cube_array",datset[var].attrs['units'])
 	return(datset)
 
-def irx_load_cubray(infile,varlst,dimlst=None,coords=None,callback=None,stashcode=None,ref_dim=None,option=2):
-	cube=iri_load_cubes(infile,cnst=varlst,callback=callback,stashcode=stashcode,option=option,dimlst=dimlst,ref_dim=ref_dim)
+def irx_load_cubray(infile,varlst,dimlst=None,coords=None,callback=None,stashcode=None,ref_dim=None,time_cnstlst=None,option=2):
+	cube=iri_load_cubes(infile,cnst=varlst,callback=callback,stashcode=stashcode,option=option,dimlst=dimlst,ref_dim=ref_dim,time_cnstlst=time_cnstlst)
 	print("irx_load_cubray",cube)
 	#if lat is not None and lon is not None and lev is not  None:
 		#interp_cube=iri_regrid(cube,lat=lat,lon=lon,lev=lev)
@@ -231,8 +239,8 @@ def irx_load_cubray(infile,varlst,dimlst=None,coords=None,callback=None,stashcod
 	return(datset)
 
 
-def irx_extract(infile,varlst,dimlst=None,coords=None,callback=None,stashcode=None,ref_dim=None,option=2):
-	datset=irx_load_cubray(infile,varlst,callback=callback,stashcode=stashcode,option=option,dimlst=dimlst,coords=coords,ref_dim=ref_dim)
+def irx_extract(infile,varlst,dimlst=None,coords=None,callback=None,stashcode=None,ref_dim=None,time_cnstlst=None,option=2):
+	datset=irx_load_cubray(infile,varlst,callback=callback,stashcode=stashcode,option=option,dimlst=dimlst,coords=coords,ref_dim=ref_dim,time_cnstlst=time_cnstlst)
 	return(datset)
 
 #############################################################################################################################
@@ -250,15 +258,18 @@ def nix_write_var(datset,fileptr,varnam,vartyp="d",varattlst=None):
 	data=datset[varnam]
 	if varattlst is None: 
 	   if data.attrs is not None:
+		#for attrky in data.attrs:
+			#varattlst=[attrky]
+	     		
 	      varattlst=list(data.attrs.keys())
 	   else:
 	      varattlst=[]
 	print(varattlst)
 	varptr = fileptr.create_variable(varnam,vartyp,data.dims)
 	fileptr.variables[varnam].assign_value(data)
-	if len(varattlst) > 0: 
-		for attrnam in varattlst:
-			fileptr=nix_write_varattr(datset,fileptr,varnam,attrnam)
+	#if len(varattlst) > 0: 
+	for attrnam in varattlst:
+		fileptr=nix_write_varattr(datset,fileptr,varnam,attrnam)
 	return(fileptr)
 
 def nix_write(datset,filenam,dimlst=None,varlst=None):
@@ -352,8 +363,17 @@ def xar_ref_dim(daset,varname,lat=None,lon=None,lev=None):
 	
 def xar_extract(filenam,varlst=None,dimlst=None):
 	datset=xarray.open_dataset(filenam)
+	print("xar_extract time",datset["time"].attrs)
+	print("xar_extract time",datset["longitude"].attrs)
 	if dimlst is None: dimlst=xar_dimlst(datset)
 	if varlst is None: varlst=xar_varlst(datset)
+	#for varnam in varlst:
+            #for attrky,attrvl in datset[varnam].attrs.items():
+                #attrkey=attrky.encode('utf-8') 
+		#attrkey = str(attrky)
+                #attrval = str(attrvl)
+                #datset[varnam].attrs[attrkey]=attrval
+		#print("xar_extract dataset attributes",datset[varnam].attrs)
 	return(datset)
 
 def xar_data_dummy(dimsize,dimlst):
@@ -503,18 +523,23 @@ def xar_vimt(datset,vardic=None,levdim=None,humnam=None,rhonam=None,uwndnam=None
 	v = xar_height_integral(weighted_q_v,levdim) 
 	dataset=xarray.Dataset(
 		data_vars=dict(
-        		u=(["time","lat", "lon"], u),
-        		v=(["time","lat", "lon"], v),
+        		u=(["time","latitude", "longitude"], u),
+        		v=(["time","latitude", "longitude"], v),
     				),
     		coords=dict(
-        		lon=datset[humnam].longitude.values,
-        		lat=datset[humnam].latitude.values,
+        		longitude=datset[humnam].longitude.values,
+        		latitude=datset[humnam].latitude.values,
         		time=datset[humnam].time.values,
         		#reference_time=datset[humnam].reference_time,
     				),
     		#attrs=dict(
 			#units=datset['time'].attrs['units']),
 				)
+	for coords in u.coords:
+                dataset[coords].attrs = u[coords].attrs
+                print("dataset in ipw",u[coords].attrs)
+	for varnam in dataset.data_vars:
+		dataset[varnam].attrs['units'] = 'kg m-1 s-1'
 	return(dataset)
 	
 def xar_datset(q,rho,u_wind=None,v_wind=None):
@@ -573,11 +598,12 @@ def datset_save(datset,outpath=None,outfile=None,infile=None,varlst=None,dimlst=
 	return(outfile)
 	
 
-def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,ref_dim=None,indxkeys=None,indxfltr=None,attrlst=None,option=2,diagflg=0):
+def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,ref_dim=None,indxkeys=None,indxfltr=None,attrlst=None,option=None,time_cnstlst=None,diagflg=0):
+	if option is None: option=2
 	switcher = {
 		"0" :lambda: irx_extract(infile,varlst,dimlst=dimlst,coords=coords,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option),
 		"1" :lambda: irx_extract(infile,varlst,dimlst=dimlst,coords=coords,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option),
-		"2" :lambda: irx_extract(infile,varlst,dimlst=dimlst,coords=coords,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option),
+		"2" :lambda: irx_extract(infile,varlst,dimlst=dimlst,coords=coords,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option,time_cnstlst=time_cnstlst),
 		"3" :lambda: irx_extract(infile,varlst,dimlst=dimlst,coords=coords,callback=callback,stashcode=stashcode,ref_dim=ref_dim,option=option),
 		"4" :lambda: nix_extract(infile,varlst,dimlst),
 		"5" :lambda: xar_extract(infile,varlst,dimlst),
@@ -591,20 +617,25 @@ def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=No
 def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,refvar=None,ref_dim=None,indxkeys=None,indxfltr=None,attrlst=None,option=None,diagflg=0):
 	if datset is None:
 		datset=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,option=option,diagflg=diagflg)
-	#print(datset)
-	#exit()
+		print("datset_extend time",datset["time"].attrs)
 	else:
 		if ref_dim is None:
 			if refvar is None: refvar=xar_varlst(datset)[0]
 			#if refvar is None: datset[1]
 			ref_dim=xar_ref_dim(datset,refvar)
 		datnew=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,ref_dim=ref_dim,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=indxfltr,option=option,diagflg=diagflg)
+		print("datnew time",datnew["time"].attrs)
 		for varnam in varlst:
 			datset.update({varnam:(dimlst,datnew[varnam])})
+			#datset.update({varnam:(datnew[varnam].dims,datnew[varnam])})
+			#for attrky,attrvl in datnew[varnam].attrs.items():
 			datset[varnam].attrs.update(datnew[varnam].attrs)
-			print("datnew in datset_extend",datnew[varnam].attrs['units'])
-                	print("datset in datset_extend", datset[varnam].attrs['units'])
-	#print("datset in datset_extend",datset)
+				#attrkey = str(attrky)
+				#attrval = str(attrvl)
+				#datset[varnam].attrs[attrkey]=attrval
+			print("datnew in datset_extend",datnew[varnam].attrs)
+                	print("datset in datset_extend", datset[varnam].attrs)
+	print("datset in datset_extend",datset.attrs)
 	return(datset)
 
 def datset_append(infiles,recdim=None,varlst=None,dimlst=None,dimsize=None,reclen=None,recgap=None,recrds=None,datset=None,outpath=None,outfile=None,indxkeys=None,indxfltr=None,attrlst=None,coords=None,option=None,diagflg=0):
@@ -629,7 +660,7 @@ def pyg_append(infile,recdim=None,reclen=None,indxkeys=None,indxfltr=None,varlst
 		dat1=datset_extract(file1,indxkeys=indxkeys,indxfltr=indxfltr,varlst=varlst,coords=coords,dimlst=dimlst,attrlst=attrlst,option=option)
 		datset=xar_append(dat1,reclen,recdim,varlst=varlst,dimlst=dimlst,dimsize=dimsize,recrds=recrds,recgap=recgap,datset=datset)
 		
-def datset_build(filepath,filefldr,varfile,varlst,varstash,varopt,dimlst,indxkeys=None,indxfltr=None,attrlst=None,option=None,datset=None):
+def datset_build(filepath,varfile,varlst,varstash,varopt,dimlst,indxkeys=None,indxfltr=None,attrlst=None,option=None,datset=None,filefldr=None):
 	print(varfile,varlst,varstash,varopt)
 	if varlst is None: varlst=list(varfile.keys())
 	for varnam in varlst:
@@ -645,7 +676,10 @@ def datset_build(filepath,filefldr,varfile,varlst,varstash,varopt,dimlst,indxkey
 			option=varopt[varnam]
 		else:
 			option=option
-		infiles=filepath+"/"+filefldr+"/"+filenam
+		if filefldr is not None:
+			infiles=filepath+"/"+filefldr+"/"+filenam
+		else:
+			infiles=filepath+"/"+filenam
 		datset=datset_extend(infiles,[varnam],datset=datset,stashcode=stashcode,dimlst=dimlst,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=attrlst,option=option)
 	return(datset)
 
