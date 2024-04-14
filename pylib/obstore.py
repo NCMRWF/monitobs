@@ -862,23 +862,13 @@ def obstore_read_batch_elements(obsfile,obsidx,nmlfile=NML_OBS_INDX,maxindx=MAXI
     cdc = numpy.array(obstore_read_subhead_segment(obsfile,"cdc",int(obsidx),1,maxindx)) 
     #obstore_read_LDC(obsfile,pos_cdc,nrow_cdc,tcol_cdc)[obsidx,:]
     cdc_sortlist=cdc
-    #print(cdc)
-    cdc_sortlist=obslib.binsort(cdc_sortlist)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=numpy.nan)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=-4481081629233643520)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=4607182418800017408)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=-1073741820.0)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=-1073741824.0)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=-1.07374182e+09)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=-3.2768e+04)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=-32768.0)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=-32768)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,missing=0.)
-    cdc_sortlist=obslib.binsort(cdc_sortlist,binmin=1.0)
+    #print(cdc_sortlist)
+    missing=[numpy.nan,-4481081629233643520,4607182418800017408,-1073741820.0,-1073741824.0,-1.07374182e+09,-3.2768e+04,-32768.0,-32768,0.]
+    cdc_sortlist=obslib.binsort(cdc_sortlist,binmin=1.0,missing=missing)
     subtype=obstore_read_subtype(obsfile)[obsidx-1]
-    cdc_sortlist=obslib.unique_list(cdc_sortlist)
     #print(cdc_sortlist)
     for i in cdc_sortlist:
+      #print(i)
       idx_arr=numpy.where(cdc == i)[0]
       if idx_arr.size > 0:
         obs_index=(idx_arr[0])+1
@@ -889,6 +879,7 @@ def obstore_read_batch_elements(obsfile,obsidx,nmlfile=NML_OBS_INDX,maxindx=MAXI
 	if obs_index > maxindx : print("Index not handled :"+obs_index)
         with open(nmlfile, "r") as nml:
             Element= pandas.read_table(nml, skiprows=None, header=0).query("eleindex == @obs_index").elename.reset_index(drop=True)[0]
+	#print(i,Element,CDC,RDC,LDC,obs_index)
         if i == cdc_sortlist[0]: 
             elist=pandas.DataFrame([[CDC,RDC,LDC,obs_index,Element]],index=[i],columns=["CDC","RDC","LDC","obs_index","Element"])
         else:
@@ -1373,6 +1364,7 @@ def obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX
             batchcount=len(subtypegroup)
             elistgroup=[None]*batchcount
             datagroup=[None]*batchcount
+	    filedata=pandas.DataFrame()
             for indx,subtype in enumerate(obstore_read_subtype(infile)[0:],start=1):
                 elist=obstore_read_batch_elements(infile,indx,nmlfile,maxindx)
                 elistgroup[indx-1]=elist
@@ -1384,13 +1376,17 @@ def obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX
                     if elemdata is not None:
                         count+=1
                         if count == 1:
-                            data=elemdata
+                            btchdata=elemdata
                         else:
 			    #print(elemdata)
-                            data=data.join(elemdata)
-			    #print(data)
-                datagroup[indx-1]=data
-    dataset={"obsgroup":obsgroup, "subtype":subtypegroup, "data":datagroup }
+                            btchdata=btchdata.join(elemdata)
+			    #print(btchdata)
+		btchdata=pandas.DataFrame(data=subtype,index=btchdata.index,columns=["subtype"]).join(btchdata)
+	        btchdata=pandas.DataFrame(data=obsgroup,index=btchdata.index,columns=["obsgroup"]).join(btchdata)
+	        filedata=filedata.append(btchdata, ignore_index=True)
+            #    datagroup[indx-1]=data
+    print(filedata)
+    dataset={"obsgroup":obsgroup, "subtype":subtypegroup, "data":filedata }
     return(dataset)
 
 #############202210#####################################################################################

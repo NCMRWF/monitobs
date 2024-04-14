@@ -236,6 +236,20 @@ def str_list_index(val,listin):
 	indx = numpy.where(numpy.array(listin)==str(val))[0][0]
 	return(indx)
 
+def unique_list(list1):
+	uniquelst=list(set(list1))
+	return(uniquelst)
+
+def unique_int(array,missing=numpy.nan):
+    intlst=[]
+    for elem in array:
+        if elem != missing : 
+           intlst=intlst+[int(elem)]
+    intlst=unique_list(intlst)
+    int_frm=pandas.DataFrame(intlst,columns=["Data"])
+    int_arr=int_frm.Data.unique()
+    return(int_arr)
+
 def nan_sort(a):
     temp = a.copy()
     temp= numpy.ma.masked_where(temp ==-3.2768e+04, temp)
@@ -251,30 +265,19 @@ def mask_array(a,missing=numpy.nan):
     #temp = numpy.ma.masked_object(temp,missing)
     return(arry)
 
-def binsort(a,binmin=numpy.NINF,binmax=numpy.inf,missing=numpy.nan):
+def binsort(a,binmin=numpy.NINF,binmax=numpy.inf,missing=None):
     temp = a.copy()
-    temp= numpy.ma.masked_where(temp =="nan", temp)
-    temp= numpy.ma.masked_where(temp =='nan', temp)
-    temp= numpy.ma.masked_where(temp ==missing, temp)
-    #temp= numpy.ma.masked_where(temp ==str(missing), temp)
+    if missing is None: missing=[numpy.nan,"nan",'nan']
+    if type(missing) is not list: missing=[missing]
+    for misval in missing:
+    	temp= numpy.ma.masked_where(temp ==misval, temp)
     temp= numpy.ma.masked_where(temp < binmin, temp)
     temp= numpy.ma.masked_where(temp > binmax, temp)
     temp=temp[~temp.mask] 
+    #print(temp)
+    temp=unique_int(temp.flatten())
     temp.sort()
     return(temp)
-
-def unique_list(list1):
-	uniquelst=list(set(list1))
-	return(uniquelst)
-
-def unique_int(array,missing=numpy.nan):
-    intlst=[]
-    for elem in array:
-        if elem != missing : 
-           intlst=intlst+[int(elem)]
-    int_frm=pandas.DataFrame(intlst,columns=["Data"])
-    int_arr=int_frm.Data.unique()
-    return(int_arr)
 
 def str_zfill(intval,padlen):
     return(str(intval).zfill(padlen))
