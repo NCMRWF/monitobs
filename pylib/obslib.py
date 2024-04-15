@@ -513,13 +513,14 @@ def pydate(datestring=None,cylcdate=None,date=None,time=None,year=None,month=01,
 		second=int(time[4:6])
 	if year is not None: 
 		year=int(year)
-    		month=int(month)
-    		day=int(day)
-		hour=int(hour)
-		minute=int(minute)
-		second=int(second)
 	else:
-		print("Essential date information is missing:")
+		year=int(1970)
+		#print("Essential date information is missing:")
+    	month=int(month)
+    	day=int(day)
+	hour=int(hour)
+	minute=int(minute)
+	second=int(second)
 	return(pydatetime(year,month,day,hour,minute,second))
   
 def fmtdatetime(fmtstr,date=None, year=None, month=None, day=None, hour=00, minute=00, second=00):
@@ -996,7 +997,7 @@ def clock_24_hour(hour):
     return(hour)
 
 def get_key_info(nmlfile,key="obsgroup"):
-    print(nmlfile)
+    #print(nmlfile)
     nmlinfo=pandas.read_csv(nmlfile, delimiter=': ',engine='python')
     if key in nmlinfo["keys"].values:
     	keyinfo=nmlinfo.query("keys == @key").information.values[0]

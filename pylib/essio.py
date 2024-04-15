@@ -399,6 +399,21 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
+def xar_framegrid(datframe,lon=None,lat=None,lev=None,time=None,reference_time=None,dfdimlat="Latitude",dfdimlon="Longitude"):
+	if lon is None: lon=numpy.arange(0.0,360.0,1)
+	if lat is None: lat=numpy.arange(-90.0,90.0,1)
+	if lev is None: lev=numpy.arange(0.0,1.0,1)
+	if time is None: time=numpy.arange(0.0,1.0,1)
+	if reference_time is None: reference_time=obslib.pydate()
+	coords=dict(lon=lon,lat=lat,lev=lev,time=time,reference_time=reference_time,)
+	datset=xarray.Dataset(coords=coords)
+	dfvarlst=datframe.columns
+	print(dfvarlst)
+	dflons=datframe[dfdimlon]
+	dflats=datframe[dfdimlat]
+	print(dflons,dflats)
+	return(datset)
+
 def xar_regrid(data,lon=None,lat=None,lev=None):
 	if lon is None: lon=numpy.arange(0.0,360.0,1)
 	if lat is None: lat=numpy.arange(-90.0,90.0,1)
@@ -406,8 +421,10 @@ def xar_regrid(data,lon=None,lat=None,lev=None):
 	#datanew = datanew.interp(level_height=lev)
 	return(data)
 
-def xar_geoloc(lats,lons):
-	midx = pd.MultiIndex.from_product([lats,lons])
+def xar_geoloc(lats=None,lons=None):
+	if lons is None: lons=numpy.arange(0.0,360.0,1)
+	if lats is None: lats=numpy.arange(-90.0,90.0,1)
+	midx = pandas.MultiIndex.from_product([lats,lons])
 	midx_coords = xarray.Coordinates.from_pandas_multiindex(midx, "x")
 	datset=xarray.Dataset(coords=midx_coords)
 	return(datset)

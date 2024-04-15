@@ -1352,7 +1352,7 @@ def obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX
     keyinfofile=OBSNML+"/keys_"+obstype+".nml"
     infokeylist=["OBSTORE", "obsgroup","maxindx","hdrsize","lutsize"]
     obstypedic=obslib.get_key_dic(keyinfofile,infokeylist,infodic={})
-    print(obstypedic)
+    #print(obstypedic)
     filename=obstypedic["OBSTORE"]+".obstore"
     input_file="%s/%s" % (inpath,filename)
     obs_index_nml="obs_index_nml"
@@ -1385,7 +1385,7 @@ def obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX
 	        btchdata=pandas.DataFrame(data=obsgroup,index=btchdata.index,columns=["obsgroup"]).join(btchdata)
 	        filedata=filedata.append(btchdata, ignore_index=True)
             #    datagroup[indx-1]=data
-    print(filedata)
+    #print(filedata)
     dataset={"obsgroup":obsgroup, "subtype":subtypegroup, "data":filedata }
     return(dataset)
 
