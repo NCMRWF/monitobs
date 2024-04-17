@@ -50,6 +50,7 @@ from iris.util import new_axis
 import iris_grib
 import umrlib
 
+
 ####################################################
 #import numpy.core.multiarray
 #import gribapi
@@ -399,19 +400,63 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
-def xar_framegrid(datframe,lon=None,lat=None,lev=None,time=None,reference_time=None,dfdimlat="Latitude",dfdimlon="Longitude"):
-	if lon is None: lon=numpy.arange(0.0,360.0,1)
-	if lat is None: lat=numpy.arange(-90.0,90.0,1)
-	if lev is None: lev=numpy.arange(0.0,1.0,1)
-	if time is None: time=numpy.arange(0.0,1.0,1)
-	if reference_time is None: reference_time=obslib.pydate()
-	coords=dict(lon=lon,lat=lat,lev=lev,time=time,reference_time=reference_time,)
+def datfr_extract(datset,datfr,distcol,varlst):
+	indx=dat
+	for varnam in varlst:
+		
+
+def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude"):
+	hlfwdth=gridsize/2
+	for latval in lat:
+	   for lonval in lon:
+	      print(gridsize,lonval,latval)
+	      lonmin=lonval-hlfwdth
+	      lonmax=lonval+hlfwdth
+	      latmin=latval-hlfwdth
+	      latmax=latval+hlfwdth
+	      qrystr=str(datfrlat)+" > "+str(latmin)+" and "+datfrlat+" < "+str(latmax)+" and "+datfrlon+" > "+str(lonmin)+" and "+datfrlon+" < "+str(lonmax)
+	      print(qrystr)
+	      if datfrlat in datframe:
+	         if datfrlon in datframe:
+	            datfr=datframe.query(qrystr)
+	      if len(datfr.index) > 0:
+	            datfr["colocdist"]=math.sqrt((datfr[datfrlat]-latval)**2+(datfr[datfrlon]-lonval)**2)
+	            indx=datfr[["colocdist"]].idxmin().value
+	      else:
+	            indx=numpy.nan
+	      datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
+	return(datset)
+
+        #print(datfr)
+	#dfvarlst=datframe.columns
+	#print(dfvarlst)
+	#dflons=datframe[datfrlon]
+	#dflats=datframe[datfrlat]
+	#print(dflons,dflats)
+def xar_dummy(coords,varlst):
+	dims=coords.key()
+	dimsize={}
+	for dimnam in dims:
+		dimsize.update({dimnam:len(coords[dimnam])})
+	datarr=xar_data_dummy(dimsize)
 	datset=xarray.Dataset(coords=coords)
-	dfvarlst=datframe.columns
-	print(dfvarlst)
-	dflons=datframe[dfdimlon]
-	dflats=datframe[dfdimlat]
-	print(dflons,dflats)
+	for varnam in varlst:
+		datset[varnam]=xarray.DataArray(data=datarr,coords=coords,dims=dimsize.keys(),name=varnam)
+	return(datset)
+
+def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,reference_time=None,datfrlat="Latitude",datfrlon="Longitude",varlst=None):
+	if gridsize is None: gridsize=1.0
+	if lon is None: lon=numpy.arange(0.0,360.0,gridsize)
+	if lat is None: lat=numpy.arange(-90.0,90.0,gridsize)
+	if lev is None: lev=numpy.arange(0.0,1.0,gridsize)
+	if time is None: time=numpy.arange(0.0,1.0,gridsize)
+	if reference_time is None: reference_time=obslib.pydate()
+	coords=dict(lon=lon,lat=lat,lev=lev,time=time,)
+	dimsize={"lon":len(lon),"lat":len(lat),"lev":len(lev),"time":len(time)}
+	if varlst is None: varlst=["datfrindx"]
+	if "datfrindx" not in varlst: varlst=varlst+["datfrindx"]
+	datset=xar_dummy(coords,varlst)
+	datset=datfr_colocate(datset,datframe,gridsize,lon,lat,datfrlat=datfrlat,datfrlon=datfrlon)
 	return(datset)
 
 def xar_regrid(data,lon=None,lat=None,lev=None):
@@ -480,6 +525,7 @@ def xar_extract(filenam,varlst=None,dimlst=None):
 
 def xar_data_dummy(dimsize,dimlst):
 	size_tuple=()
+	if dimlst is None: dimlst=dimsize.keys()
 	for dimnam in dimlst:
 		size_tuple=size_tuple+(dimsize[dimnam],)
 	data=numpy.zeros(size_tuple)
