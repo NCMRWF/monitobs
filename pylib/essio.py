@@ -405,26 +405,31 @@ def datfr_extract(datset,datfr,distcol,varlst):
 	for varnam in varlst:
 		print(varnam)
 
+def datfr_min_indx(datfr,colnam):
+	indx=datfr[datfr[colnam]==datfr[colnam].min()].index[0]
+	return(indx)
+
+def datfr_max_indx(datfr,colnam):
+	indx=datfr[datfr[colnam]==datfr[colnam].max()].index[0]
+	return(indx)
+
 def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude"):
 	hlfwdth=gridsize/2
 	datframe=datframe.assign(colocdist=None)
 	for latval in lat:
 	   for lonval in lon:
-	      print(gridsize,lonval,latval)
 	      lonmin=lonval-hlfwdth
 	      lonmax=lonval+hlfwdth
 	      latmin=latval-hlfwdth
 	      latmax=latval+hlfwdth
 	      qrystr=str(datfrlat)+" > "+str(latmin)+" and "+datfrlat+" < "+str(latmax)+" and "+datfrlon+" > "+str(lonmin)+" and "+datfrlon+" < "+str(lonmax)
-	      print(qrystr)
 	      if datfrlat in datframe:
 	         if datfrlon in datframe:
 	            datfr=datframe.query(qrystr)
 	      if len(datfr.index) > 0:
 		for indx in datfr.index:
 	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
-		print(datfr)
-	        indx=datfr[["colocdist"]].idxmin()
+	        indx=datfr_min_indx(datfr,"colocdist")
 		print(indx)
 		print(datfr.loc[indx])
 	      else:
@@ -432,12 +437,6 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 	      datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
 	return(datset)
 
-        #print(datfr)
-	#dfvarlst=datframe.columns
-	#print(dfvarlst)
-	#dflons=datframe[datfrlon]
-	#dflats=datframe[datfrlat]
-	#print(dflons,dflats)
 def xar_dummy(coords,varlst):
 	dims=coords.keys()
 	dimsize={}
@@ -461,6 +460,8 @@ def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,re
 	if varlst is None: varlst=["datfrindx"]
 	if "datfrindx" not in varlst: varlst=varlst+["datfrindx"]
 	datset=xar_dummy(coords,varlst)
+	lon=numpy.array([142,])
+	lat=numpy.array([51,])
 	datset=datfr_colocate(datset,datframe,gridsize,lon,lat,datfrlat=datfrlat,datfrlon=datfrlon)
 	return(datset)
 
