@@ -403,10 +403,11 @@ def nix_extract(filenam,varlst,dimlst):
 def datfr_extract(datset,datfr,distcol,varlst):
 	indx=dat
 	for varnam in varlst:
-		
+		print(varnam)
 
 def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude"):
 	hlfwdth=gridsize/2
+	datframe=datframe.assign(colocdist=None)
 	for latval in lat:
 	   for lonval in lon:
 	      print(gridsize,lonval,latval)
@@ -420,10 +421,14 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 	         if datfrlon in datframe:
 	            datfr=datframe.query(qrystr)
 	      if len(datfr.index) > 0:
-	            datfr["colocdist"]=math.sqrt((datfr[datfrlat]-latval)**2+(datfr[datfrlon]-lonval)**2)
-	            indx=datfr[["colocdist"]].idxmin().value
+		for indx in datfr.index:
+	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
+		print(datfr)
+	        indx=datfr[["colocdist"]].idxmin()
+		print(indx)
+		print(datfr.loc[indx])
 	      else:
-	            indx=numpy.nan
+	        indx=numpy.nan
 	      datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
 	return(datset)
 
@@ -434,7 +439,7 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 	#dflats=datframe[datfrlat]
 	#print(dflons,dflats)
 def xar_dummy(coords,varlst):
-	dims=coords.key()
+	dims=coords.keys()
 	dimsize={}
 	for dimnam in dims:
 		dimsize.update({dimnam:len(coords[dimnam])})
@@ -523,7 +528,7 @@ def xar_extract(filenam,varlst=None,dimlst=None):
 		#print("xar_extract dataset attributes",datset[varnam].attrs)
 	return(datset)
 
-def xar_data_dummy(dimsize,dimlst):
+def xar_data_dummy(dimsize,dimlst=None):
 	size_tuple=()
 	if dimlst is None: dimlst=dimsize.keys()
 	for dimnam in dimlst:
