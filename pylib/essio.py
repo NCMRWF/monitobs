@@ -50,6 +50,7 @@ from iris.util import new_axis
 import iris_grib
 import umrlib
 
+
 ####################################################
 #import numpy.core.multiarray
 #import gribapi
@@ -210,7 +211,7 @@ def pyg_extract(infile,indxkeys=None,indxfltr=None,varlst=None,coords=None,dimls
 ### IRIS based functions
 #############################################################################################################################
 
-def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst=None,ref_dim=None,time_cnstlst=None,ind=None):
+def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst=None,ref_dim=None,time_cnstlst=None,domain=None):
     opt=str(option)
     if stashcode is not None: cnst=iris.AttributeConstraint(STASH=stashcode)
     switcher = {
@@ -245,14 +246,18 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
 		     cubes=new_axis(cubes,dimnam)
     #print(cube)
     if time_cnstlst is not None:
-	t1 = time_cnstlst[0]
-	print("t1 is",t1)
-	t2 = time_cnstlst[1]
-	print("t2 is",t2)
-	cubes=cubes[t1:t2]
+	timemin = time_cnstlst[0]
+	print("t1 is",timemin)
+	timemax = time_cnstlst[1]
+	print("t2 is",timemax)
+	cubes=cubes[timemin:timemax]
 	print(cubes)
-    if ind is not None:
-	cubes=cubes.intersection(longitude=(30,120),latitude=(-15,45))
+    if domain is not None:
+	latmin=domain.latmin
+	latmax=domain.latmax
+	lonmin=domain.lonmin
+	lonmax=domain.lonmax
+	cubes=cubes.intersection(longitude=(lonmin,lonmax),latitude=(latmin,latmax))
 	#cubes=iris.Constraint(time=lambda cell: pdt1 <= cell.point < pdt2)
     return(cubes)
 
@@ -396,6 +401,70 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
+def datfr_extract(datset,datfr,distcol,varlst):
+	indx=dat
+	for varnam in varlst:
+		print(varnam)
+
+def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude"):
+	hlfwdth=gridsize/2
+	datframe=datframe.assign(colocdist=None)
+	for latval in lat:
+	   for lonval in lon:
+	      print(gridsize,lonval,latval)
+	      lonmin=lonval-hlfwdth
+	      lonmax=lonval+hlfwdth
+	      latmin=latval-hlfwdth
+	      latmax=latval+hlfwdth
+	      qrystr=str(datfrlat)+" > "+str(latmin)+" and "+datfrlat+" < "+str(latmax)+" and "+datfrlon+" > "+str(lonmin)+" and "+datfrlon+" < "+str(lonmax)
+	      print(qrystr)
+	      if datfrlat in datframe:
+	         if datfrlon in datframe:
+	            datfr=datframe.query(qrystr)
+	      if len(datfr.index) > 0:
+		for indx in datfr.index:
+	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
+		print(datfr)
+	        indx=datfr[["colocdist"]].idxmin()
+		print(indx)
+		print(datfr.loc[indx])
+	      else:
+	        indx=numpy.nan
+	      datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
+	return(datset)
+
+        #print(datfr)
+	#dfvarlst=datframe.columns
+	#print(dfvarlst)
+	#dflons=datframe[datfrlon]
+	#dflats=datframe[datfrlat]
+	#print(dflons,dflats)
+def xar_dummy(coords,varlst):
+	dims=coords.keys()
+	dimsize={}
+	for dimnam in dims:
+		dimsize.update({dimnam:len(coords[dimnam])})
+	datarr=xar_data_dummy(dimsize)
+	datset=xarray.Dataset(coords=coords)
+	for varnam in varlst:
+		datset[varnam]=xarray.DataArray(data=datarr,coords=coords,dims=dimsize.keys(),name=varnam)
+	return(datset)
+
+def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,reference_time=None,datfrlat="Latitude",datfrlon="Longitude",varlst=None):
+	if gridsize is None: gridsize=1.0
+	if lon is None: lon=numpy.arange(0.0,360.0,gridsize)
+	if lat is None: lat=numpy.arange(-90.0,90.0,gridsize)
+	if lev is None: lev=numpy.arange(0.0,1.0,gridsize)
+	if time is None: time=numpy.arange(0.0,1.0,gridsize)
+	if reference_time is None: reference_time=obslib.pydate()
+	coords=dict(lon=lon,lat=lat,lev=lev,time=time,)
+	dimsize={"lon":len(lon),"lat":len(lat),"lev":len(lev),"time":len(time)}
+	if varlst is None: varlst=["datfrindx"]
+	if "datfrindx" not in varlst: varlst=varlst+["datfrindx"]
+	datset=xar_dummy(coords,varlst)
+	datset=datfr_colocate(datset,datframe,gridsize,lon,lat,datfrlat=datfrlat,datfrlon=datfrlon)
+	return(datset)
+
 def xar_regrid(data,lon=None,lat=None,lev=None):
 	if lon is None: lon=numpy.arange(1.0,359.0,1)
 	if lat is None: lat=numpy.arange(-89.0,89.0,1)
@@ -403,8 +472,10 @@ def xar_regrid(data,lon=None,lat=None,lev=None):
 	#datanew = datanew.interp(level_height=lev)
 	return(data)
 
-def xar_geoloc(lats,lons):
-	midx = pd.MultiIndex.from_product([lats,lons])
+def xar_geoloc(lats=None,lons=None):
+	if lons is None: lons=numpy.arange(0.0,360.0,1)
+	if lats is None: lats=numpy.arange(-90.0,90.0,1)
+	midx = pandas.MultiIndex.from_product([lats,lons])
 	midx_coords = xarray.Coordinates.from_pandas_multiindex(midx, "x")
 	datset=xarray.Dataset(coords=midx_coords)
 	return(datset)
@@ -458,8 +529,9 @@ def xar_extract(filenam,varlst=None,dimlst=None):
 		#print("xar_extract dataset attributes",datset[varnam].attrs)
 	return(datset)
 
-def xar_data_dummy(dimsize,dimlst):
+def xar_data_dummy(dimsize,dimlst=None):
 	size_tuple=()
+	if dimlst is None: dimlst=dimsize.keys()
 	for dimnam in dimlst:
 		size_tuple=size_tuple+(dimsize[dimnam],)
 	data=numpy.zeros(size_tuple)
@@ -704,6 +776,9 @@ def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=No
     	}
 	func = switcher.get(str(option), lambda: 'Invalid option : '+str(option) )
 	datset = func()
+	##############################
+	### Slice code
+	##############################
 	if outpath is not None: outfile=datset_save(datset,outpath,outfile,infile,diagflg=diagflg)
 	return(datset)
 
