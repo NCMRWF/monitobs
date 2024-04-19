@@ -413,7 +413,7 @@ def datfr_max_indx(datfr,colnam):
 	indx=datfr[datfr[colnam]==datfr[colnam].max()].index[0]
 	return(indx)
 
-def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude"):
+def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude",varlst=None):
 	hlfwdth=gridsize/2
 	datframe=datframe.assign(colocdist=None)
 	for latval in lat:
@@ -430,11 +430,14 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 		for indx in datfr.index:
 	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
 	        indx=datfr_min_indx(datfr,"colocdist")
-		print(indx)
-		print(datfr.loc[indx])
+		#print(indx)
+		#print(datfr.loc[indx])
 	      else:
 	        indx=numpy.nan
 	      datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
+	      for varnam in varlst:
+		if varnam is not "datfrindx":
+			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datfr[varnam].loc[indx]
 	return(datset)
 
 def xar_dummy(coords,varlst):
@@ -462,7 +465,7 @@ def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,re
 	datset=xar_dummy(coords,varlst)
 	lon=numpy.array([142,])
 	lat=numpy.array([51,])
-	datset=datfr_colocate(datset,datframe,gridsize,lon,lat,datfrlat=datfrlat,datfrlon=datfrlon)
+	datset=datfr_colocate(datset,datframe,gridsize,lon,lat,datfrlat=datfrlat,datfrlon=datfrlon,varlst=varlst)
 	return(datset)
 
 def xar_regrid(data,lon=None,lat=None,lev=None):
@@ -534,7 +537,7 @@ def xar_data_dummy(dimsize,dimlst=None):
 	if dimlst is None: dimlst=dimsize.keys()
 	for dimnam in dimlst:
 		size_tuple=size_tuple+(dimsize[dimnam],)
-	data=numpy.zeros(size_tuple)
+	data=numpy.full(size_tuple,fill_value=numpy.nan)
 	return(data)
 
 def xar_rec_coords_update(datvar,recdim,recrds=None,recmeta=None,reclen=None,recgap=None,varlst=None,dimlst=None):
