@@ -1,9 +1,21 @@
 keys: information
+obsgroup: 
 obsname: gmihigh
 gdasname: 
 bufrmtyp: 
-obsubtyp:
-elemcnt: 
+obsubtyplst: [,] 
+elemcntlst: [,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
+OBSTORE: GMIhigh
+HDRFILE: 
+longname: GMI_High
+satinstsnsr: gpm1-gmi
+elemlist_:  
+brightnessTemperature:
+metdbsubtype: 
+SatID: 
 OBSTORE: GMIhigh
 longname: GMI_High
 satinstsnsr: gpm1-gmi

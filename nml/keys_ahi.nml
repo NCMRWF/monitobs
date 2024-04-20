@@ -1,9 +1,21 @@
 keys: information
+obsgroup: 
 obsname: ahi
 gdasname: 
 bufrmtyp: 
-obsubtyp: 26320 
-elemcnt: 39 
+obsubtyplst: [26320,] 
+elemcntlst: [39,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
+OBSTORE: AHIClr 
+HDRFILE: 
+longname: Himawari_AHI
+satinstsnsr: himawari8_ahi
+elemlist_:  
+brightnessTemperature:
+metdbsubtype: 
+SatID: 
 OBSTORE: AHIClr
 longname: Himawari_AHI
 satinstsnsr: himawari8-ahi

@@ -1,9 +1,13 @@
 keys: information
+obsgroup: 
 obsname: mwsfy3
 gdasname: 
 bufrmtyp: 
-obsubtyp:  
-elemcnt: 
+obsubtyplst: [,] 
+elemcntlst: [,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
 OBSTORE: MWSFY3
 longname: FY3_MWS
 satinstsnsr: fy3-mws

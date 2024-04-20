@@ -224,6 +224,7 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
     func = switcher.get(opt, lambda: 'Invalid option')
     cubes = func()
     #print("ref_dim before", ref_dim)
+    cubes = cubes.collapsed('time', iris.analysis.MEAN)
     if ref_dim is not None:
          interp_cube=iri_regrid(cubes,ref_dim=ref_dim)
 	 #print("ref_dim after:interp_cube", interp_cube)
@@ -469,9 +470,9 @@ def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,re
 	return(datset)
 
 def xar_regrid(data,lon=None,lat=None,lev=None):
-	if lon is None: lon=numpy.arange(0.0,360.0,1)
-	if lat is None: lat=numpy.arange(-90.0,90.0,1)
-	data=data.interp(latitude=lat, longitude=lon)
+	if lon is None: lon=numpy.arange(1.0,359.0,1)
+	if lat is None: lat=numpy.arange(-89.0,89.0,1)
+	data=data.interp(latitude=lat, longitude=lon, method="nearest")
 	#datanew = datanew.interp(level_height=lev)
 	return(data)
 
@@ -788,14 +789,14 @@ def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=No
 def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,refvar=None,ref_dim=None,indxkeys=None,indxfltr=None,attrlst=None,option=None,diagflg=0):
 	if datset is None:
 		datset=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,option=option,diagflg=diagflg)
-		print("datset_extend time",datset["time"].attrs)
+		#print("datset_extend time",datset["time"].attrs)
 	else:
 		if ref_dim is None:
 			if refvar is None: refvar=xar_varlst(datset)[0]
 			#if refvar is None: datset[1]
 			ref_dim=xar_ref_dim(datset,refvar)
 		datnew=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,ref_dim=ref_dim,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=indxfltr,option=option,diagflg=diagflg)
-		print("datnew time",datnew["time"].attrs)
+		#print("datnew time",datnew["time"].attrs)
 		for varnam in varlst:
 			datset.update({varnam:(dimlst,datnew[varnam])})
 			#datset.update({varnam:(datnew[varnam].dims,datnew[varnam])})
@@ -804,9 +805,9 @@ def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None
 				#attrkey = str(attrky)
 				#attrval = str(attrvl)
 				#datset[varnam].attrs[attrkey]=attrval
-			print("datnew in datset_extend",datnew[varnam].attrs)
-                	print("datset in datset_extend", datset[varnam].attrs)
-	print("datset in datset_extend",datset.attrs)
+			#print("datnew in datset_extend",datnew[varnam].attrs)
+                	#print("datset in datset_extend", datset[varnam].attrs)
+	#print("datset in datset_extend",datset.attrs)
 	return(datset)
 
 def datset_append(infiles,recdim=None,varlst=None,dimlst=None,dimsize=None,reclen=None,recgap=None,recrds=None,datset=None,outpath=None,outfile=None,indxkeys=None,indxfltr=None,attrlst=None,coords=None,option=None,diagflg=0):

@@ -3,8 +3,8 @@ obsgroup: 27
 obsname: seviri
 gdasname: 
 bufrmtyp: 
-obsubtyp: 24510
-elemcnt: 30 
+obsubtyplst: [24510,] 
+elemcntlst: [30,]
 maxindx: 621
 hdrsize: 339
 lutsize: 128
