@@ -1973,7 +1973,7 @@ def xar_plot_ose_scalar(plotdic,axes=None):
 	plot=[None]*3
 	axlbly=[None]*3
 
-	plot[0]=result_ctl.plot(ax=axes[0],vmin=0,vmax=40,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+	plot[0]=result_ctl.plot(ax=axes[0],cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[0])
 	m.drawcoastlines()
 	axlbly[0]=axes[0].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)
@@ -1983,7 +1983,7 @@ def xar_plot_ose_scalar(plotdic,axes=None):
 	axes[0].set_title('')
 	axes[0].annotate("(a)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 		
-	plot[1]=result_exp.plot(ax=axes[1],vmin=0,vmax=40, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+	plot[1]=result_exp.plot(ax=axes[1], cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[1])
 	m.drawcoastlines()
 	axlbly[1]=axes[1].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes,fontsize=17)
@@ -2022,11 +2022,14 @@ def xar_plot_ose_scalar_withobs(plotdic,axes=None):
         #result_diff = result_exp - result_ctl
         #result_ctl = data_ctl[plotvar]
         #result_exp = data_exp[plotvar]
-        result_d = result_exp - result_ctl
+	result_exp_d= essio.xar_regrid(result_exp)
+	result_ctl_d= essio.xar_regrid(result_ctl)
+        #result_d = result_exp - result_ctl
         #result_dat=result_d.to_dataset(name=plotvar)
         #print(result_dat)
-        result_diff = essio.xar_regrid(result_d)
-        print(result_diff)
+        #result_diff = essio.xar_regrid(result_d)
+        result_diff=result_exp_d-result_ctl_d
+	print(result_diff)
         #result_diff=result_regrid[plotvar]
         #print(result_diff)
         #ipw_ctl = data_ctl.ipw
@@ -2034,34 +2037,34 @@ def xar_plot_ose_scalar_withobs(plotdic,axes=None):
         #data_diff = data_exp - data_ctl
         #ipw_diff = ipw_exp - ipw_ctl
 
-        fig, axes = pyplot.subplots(nrows=4, ncols=1,figsize=[10,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+        fig, axes = pyplot.subplots(nrows=4, ncols=1,figsize=[5,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
         plot=[None]*4
         axlbly=[None]*4
 
-        plot[0]=result_obs.plot(ax=axes[0],vmin=0,vmax=25,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+        plot[0]=result_obs.plot(ax=axes[0],vmin=0,vmax=150,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
         m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[0])
         m.drawcoastlines()
-        axlbly[0]=axes[0].text(-0.1, 0.5, axlbl_y_obs, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)
+        axlbly[0]=axes[0].text(-0.2, 0.5, axlbl_y_obs, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)
         axins = inset_axes(axes[0], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[0].transAxes, borderpad = 0)
         cbar = fig.colorbar(plot[0], cax = axins)
         cbar.ax.tick_params(labelsize=15)
         axes[0].set_title('')
         axes[0].annotate("(a)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 
-        plot[1]=result_ctl.plot(ax=axes[1],vmin=0,vmax=25, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+        plot[1]=result_ctl.plot(ax=axes[1],vmin=0,vmax=150, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
         m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[1])
         m.drawcoastlines()
-        axlbly[1]=axes[1].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes,fontsize=17)
+        axlbly[1]=axes[1].text(-0.2, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes,fontsize=17)
         axins = inset_axes(axes[1], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[1].transAxes, borderpad = 0)
         cbar = fig.colorbar(plot[1], cax = axins)
         cbar.ax.tick_params(labelsize=15)
         axes[1].set_title('')
         axes[1].annotate("(b)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 
-        plot[2]=result_exp.plot(ax=axes[2],vmin=0,vmax=25,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+        plot[2]=result_exp.plot(ax=axes[2],vmin=0,vmax=150,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
         m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[2])
         m.drawcoastlines()
-        axlbly[2]=axes[2].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[2].transAxes,fontsize=17)
+        axlbly[2]=axes[2].text(-0.2, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[2].transAxes,fontsize=17)
         axins = inset_axes(axes[2], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[2].transAxes, borderpad = 0)
         cbar = fig.colorbar(plot[2], cax = axins)
         cbar.ax.tick_params(labelsize=15)
@@ -2071,7 +2074,7 @@ def xar_plot_ose_scalar_withobs(plotdic,axes=None):
         plot[3]=result_diff.plot(ax=axes[3],vmin=-2,vmax=2,cmap='RdBu', transform=ccrs.PlateCarree(),add_colorbar=False)
         m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[3])
         m.drawcoastlines()
-        axlbly[3]=axes[3].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[3].transAxes,fontsize=17)
+        axlbly[3]=axes[3].text(-0.2, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[3].transAxes,fontsize=17)
         axins = inset_axes(axes[3], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[3].transAxes, borderpad = 0)
         cbar = fig.colorbar(plot[3], cax = axins)
         cbar.ax.tick_params(labelsize=15)

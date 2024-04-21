@@ -223,6 +223,13 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
 
     func = switcher.get(opt, lambda: 'Invalid option')
     cubes = func()
+    if time_cnstlst is not None:
+	timemin = time_cnstlst[0]
+	print("t1 is",timemin)
+	timemax = time_cnstlst[1]
+	print("t2 is",timemax)
+	cubes=cubes[timemin:timemax]
+	print(cubes)
     #print("ref_dim before", ref_dim)
     cubes = cubes.collapsed('time', iris.analysis.MEAN)
     if ref_dim is not None:
@@ -245,13 +252,6 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
 		  if len(cubes.coord(dimnam).points) is 1:
 		     cubes=new_axis(cubes,dimnam)
     #print(cube)
-    if time_cnstlst is not None:
-	timemin = time_cnstlst[0]
-	print("t1 is",timemin)
-	timemax = time_cnstlst[1]
-	print("t2 is",timemax)
-	cubes=cubes[timemin:timemax]
-	print(cubes)
     if domain is not None:
 	latmin=domain.latmin
 	latmax=domain.latmax
@@ -425,7 +425,7 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 		for indx in datfr.index:
 	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
 		print(datfr)
-	        indx=datfr[["colocdist"]].idxmin()
+	        indx=datfr["colocdist"].idxmin()
 		print(indx)
 		print(datfr.loc[indx])
 	      else:
@@ -782,16 +782,16 @@ def datset_extract(infile,varlst,dimlst=None,coords=None,outpath=None,outfile=No
 	if outpath is not None: outfile=datset_save(datset,outpath,outfile,infile,diagflg=diagflg)
 	return(datset)
 
-def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,refvar=None,ref_dim=None,indxkeys=None,indxfltr=None,attrlst=None,option=None,diagflg=0):
+def datset_extend(infile,varlst,datset=None,dimlst=None,coords=None,outpath=None,outfile=None,callback=None,stashcode=None,refvar=None,ref_dim=None,indxkeys=None,indxfltr=None,attrlst=None,option=None,time_cnstlst=None,diagflg=0):
 	if datset is None:
-		datset=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,option=option,diagflg=diagflg)
+		datset=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,option=option,time_cnstlst=time_cnstlst,diagflg=diagflg)
 		#print("datset_extend time",datset["time"].attrs)
 	else:
 		if ref_dim is None:
 			if refvar is None: refvar=xar_varlst(datset)[0]
 			#if refvar is None: datset[1]
 			ref_dim=xar_ref_dim(datset,refvar)
-		datnew=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,ref_dim=ref_dim,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=indxfltr,option=option,diagflg=diagflg)
+		datnew=datset_extract(infile,varlst,dimlst=dimlst,coords=coords,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,ref_dim=ref_dim,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=indxfltr,option=option,time_cnstlst=time_cnstlst,diagflg=diagflg)
 		#print("datnew time",datnew["time"].attrs)
 		for varnam in varlst:
 			datset.update({varnam:(dimlst,datnew[varnam])})
