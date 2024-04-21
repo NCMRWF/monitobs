@@ -3,8 +3,8 @@ obsgroup: 55
 obsname: mwri
 gdasname: 
 bufrmtyp: 
-obsubtyp: 29000 
-elemcnt: 35
+obsubtyplst: [29000,] 
+elemcntlst: [35,]
 maxindx: 621
 hdrsize: 339
 lutsize: 128

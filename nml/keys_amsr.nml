@@ -1,9 +1,21 @@
 keys: information
+obsgroup: 
 obsname: amsr
 gdasname: 
 bufrmtyp: 
-obsubtyp: 25000 
-elemcnt: 
+obsubtyplst: [25000,] 
+elemcntlst: [,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
+OBSTORE: AMSR
+HDRFILE: 
+longname: AMSR
+satinstsnsr: gcomw1-amsr
+elemlist_:  
+brightnessTemperature:
+metdbsubtype: 
+SatID: 
 OBSTORE: AMSR
 longname: AMSR
 satinstsnsr: gcomw1-amsr 

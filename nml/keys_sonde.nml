@@ -1,9 +1,13 @@
 keys: information
+obsgroup: 
 obsname: sonde
 gdasname: 
 bufrmtyp: 
-obsubtyp:  
-elemcnt: 
+obsubtyplst: [,] 
+elemcntlst: [,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
 OBSTORE: Sonde
 longname: Sonde 
 satinstsnsr: sonde

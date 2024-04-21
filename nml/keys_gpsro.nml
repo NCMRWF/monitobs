@@ -1,8 +1,20 @@
 keys: information
+obsgroup: 
 obsname: gpsro
 gdasname: 
 bufrmtyp: 
-obsubtyp:  
-elemcnt: 
+obsubtyplst: [,] 
+elemcntlst: [,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
+OBSTORE: GPSRO 
+HDRFILE: 
+longname: GPSRO
+satinstsnsr: 
+elemlist_:  
+brightnessTemperature:
+metdbsubtype: 
+SatID: 
 OBSTORE: GPSRO
 longname: GPSRO 

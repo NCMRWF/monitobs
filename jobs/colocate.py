@@ -12,12 +12,13 @@ filenam=infile.split("/")[-1]
 inpath=infile.split("/"+filenam)[0]
 obstype=filenam.split(".")[0].lower()
 print(obstype)
-columns=["obsgroup",  "subtype",  "Year" "TCWV"]
+columns=["obsgroup",  "subtype",  "TCWV", "Latitude", "Longitude", "SatView", "SatID" ]
 
 dataset=modulib.obstore_read_file(inpath,obstype)
 datframe=dataset["data"]
-datset=essio.xar_framegrid(datframe)
+datset=essio.xar_framegrid(datframe,varlst=columns)
 
 print(datset)
 
 exit()
+
