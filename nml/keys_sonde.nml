@@ -9,5 +9,10 @@ maxindx: 621
 hdrsize: 339
 lutsize: 128
 OBSTORE: Sonde
+HDRFILE: 
 longname: Sonde 
 satinstsnsr: sonde
+elemlist_:  
+brightnessTemperature: 
+metdbsubtype: 
+SatID: 

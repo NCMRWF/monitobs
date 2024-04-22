@@ -16,6 +16,3 @@ elemlist_:
 brightnessTemperature:
 metdbsubtype: 
 SatID: 
-OBSTORE: AMSR
-longname: AMSR
-satinstsnsr: gcomw1-amsr 

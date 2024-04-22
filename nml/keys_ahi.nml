@@ -16,6 +16,3 @@ elemlist_:
 brightnessTemperature:
 metdbsubtype: 
 SatID: 
-OBSTORE: AHIClr
-longname: Himawari_AHI
-satinstsnsr: himawari8-ahi

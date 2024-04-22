@@ -16,6 +16,3 @@ elemlist_:
 brightnessTemperature:
 metdbsubtype: 
 SatID: 
-OBSTORE: IASI
-longname: IASI 
-satinstsnsr: metop1-iasi,metop3-iasi

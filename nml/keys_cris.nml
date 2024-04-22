@@ -16,6 +16,3 @@ elemlist_:
 brightnessTemperature:
 metdbsubtype: 
 SatID: 
-OBSTORE: CrIS
-longname: CrIS 
-satinstsnsr: snpp-cris,noaa20-cris

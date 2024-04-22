@@ -9,5 +9,10 @@ maxindx: 621
 hdrsize: 339
 lutsize: 128
 OBSTORE: Surface
+HDRFILE: 
 longname: Surface
 satinstsnsr: surface
+elemlist_:  
+brightnessTemperature: 
+metdbsubtype: 
+SatID: 
