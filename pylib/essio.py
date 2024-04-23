@@ -57,6 +57,12 @@ import umrlib
 ### ImportError: No module named _multiarray_umath
 ####################################################
 
+def datfr_compute_tcwv(datframe):
+	print(datframe.columns)
+	exit()
+	return(datframe)
+
+
 #############################################################################################################################
 ### GribAPI and IRIS based functions
 #############################################################################################################################
@@ -472,6 +478,8 @@ def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,re
 	datset=xar_dummy(coords,varlst)
 	lon=numpy.array([142,])
 	lat=numpy.array([51,])
+	print(varlst)
+	if 50100 in datframe.subtyp and "TCWV" in varlst: datframe=datfr_compute_tcwv(datframe)
 	datset=datfr_colocate(datset,datframe,gridsize,lon,lat,datfrlat=datfrlat,datfrlon=datfrlon,varlst=varlst)
 	return(datset)
 
