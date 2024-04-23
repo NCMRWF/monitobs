@@ -975,9 +975,13 @@ def obstore_read_element(obsfile,elist,element,pos_data,record_pos,tcols,nmlfile
                 for j in levs:
                     seekpos=pos_data+((i-1)*tcols)+int(cdc-1)+((j-1)*rdc)
                     if diaglev > 100 : errprint("pos_data=%s,i=%s,tcols=%s,cdc=%s,j=%s,rdc =%s,seekpos = %s"%(pos_data,i,tcols,cdc,j,rdc,seekpos))
-                    obsfile.seek((seekpos-1)*8,0)
+		    if seekpos > 0:
+                    	obsfile.seek((seekpos-1)*8,0)
+                    	data = obsfile.read(data_size)
+		    else:
+			print("Seek position is negative")
+		    	print(seekpos)
                     if diaglev > 100: errprint("Remaining bytes = "+str(obstore_get_tail_length(obsfile,seekpos)))
-                    data = obsfile.read(data_size)
                     #errprint(data_size)
                     errprint("Check point 6: data = %s"%(data))
                     #print(i,j,data_size,frmtstr)

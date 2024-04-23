@@ -430,22 +430,21 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 	      if len(datfr.index) > 0:
 		for indx in datfr.index:
 	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
-<<<<<<< HEAD
-		print(datfr)
-	        indx=datfr["colocdist"].idxmin()
+	        indx=datfr_min_indx(datfr,"colocdist")
+	        #indx=datfr["colocdist"].idxmin()
+		#print(datfr)
 		print(indx)
 		print(datfr.loc[indx])
-=======
-	        indx=datfr_min_indx(datfr,"colocdist")
-		#print(indx)
-		#print(datfr.loc[indx])
->>>>>>> 9d6865612611fa4cd153ca06337f0daf2d11a8e4
 	      else:
-	        indx=numpy.nan
-	      datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
+	        indx=None
 	      for varnam in varlst:
-		if varnam is not "datfrindx":
+		if indx is not None:
+		   if varnam is "datfrindx":
+	      		datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
+		   else:
 			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datfr[varnam].loc[indx]
+		else:
+		   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
 	return(datset)
 
 def xar_dummy(coords,varlst):

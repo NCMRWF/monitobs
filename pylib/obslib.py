@@ -996,11 +996,33 @@ def clock_24_hour(hour):
     if hour < 0 or hour > 24 : clock_24_hour(hour)
     return(hour)
 
+def remove_whitespace( x ):
+    if isinstance( x, basestring ):
+        return x.strip()
+    else:
+        return x
+
+def panda_strip(x):
+    r =[]
+    for y in x:
+        if isinstance(y, str):
+            y = y.strip()
+        r.append(y)
+    return(pandas.Series(r))
+
 def get_key_info(nmlfile,key="obsgroup"):
     #print(nmlfile)
-    nmlinfo=pandas.read_csv(nmlfile, delimiter=': ',engine='python')
+    nmlinfo=pandas.read_csv(nmlfile, delimiter=':',engine='python')
+    nmlinfo=nmlinfo.apply(panda_strip)
+    #print(nmlinfo)
     if key in nmlinfo["keys"].values:
-    	keyinfo=nmlinfo.query("keys == @key").information.values[0]
+	dicselect=nmlinfo.query("keys == @key")
+	#print(dicselect)
+    	keyinfo=dicselect.iloc[:, 1]
+    	#keyinfo=dicselect["information"]
+  	#keyinfo=getattr(dicselect,"information")
+	#print(keyinfo)
+	keyinfo=keyinfo.values[0]
     else:
     	print("Key '"+str(key)+"' not found")
     	print(nmlinfo["keys"].values)

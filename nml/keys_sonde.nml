@@ -1,5 +1,5 @@
 keys: information
-obsgroup: 
+obsgroup: 5
 obsname: sonde
 gdasname: 
 bufrmtyp: 
@@ -12,7 +12,7 @@ OBSTORE: Sonde
 HDRFILE: 
 longname: Sonde 
 satinstsnsr: sonde
-elemlist_:  
+elemlist_: 
 brightnessTemperature: 
 metdbsubtype: 
 SatID: 
