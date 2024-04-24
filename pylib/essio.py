@@ -57,6 +57,68 @@ import umrlib
 ### ImportError: No module named _multiarray_umath
 ####################################################
 
+
+def datfr_extract(datset,datfr,distcol,varlst):
+	indx=dat
+	for varnam in varlst:
+		print(varnam)
+
+def datfr_min_indx(datfr,colnam):
+	indx=datfr[datfr[colnam]==datfr[colnam].min()].index[0]
+	return(indx)
+
+def datfr_max_indx(datfr,colnam):
+	indx=datfr[datfr[colnam]==datfr[colnam].max()].index[0]
+	return(indx)
+
+def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude",varlst=None):
+	hlfwdth=gridsize/2
+	datframe=datframe.assign(colocdist=None)
+	for latval in lat:
+	   for lonval in lon:
+	      lonmin=lonval-hlfwdth
+	      lonmax=lonval+hlfwdth
+	      latmin=latval-hlfwdth
+	      latmax=latval+hlfwdth
+	      qrystr=str(datfrlat)+" > "+str(latmin)+" and "+datfrlat+" < "+str(latmax)+" and "+datfrlon+" > "+str(lonmin)+" and "+datfrlon+" < "+str(lonmax)
+	      if datfrlat in datframe:
+	         if datfrlon in datframe:
+	            datfr=datframe.query(qrystr)
+	      if len(datfr.index) > 0:
+		for indx in datfr.index:
+	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
+	        indx=datfr_min_indx(datfr,"colocdist")
+	        #indx=datfr["colocdist"].idxmin()
+		#print(datfr)
+		print(indx)
+		print(datfr.loc[indx])
+	      else:
+	        indx=None
+	      for varnam in varlst:
+		if indx is not None:
+		   if varnam is "datfrindx":
+	      		datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
+		   else:
+			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datfr[varnam].loc[indx]
+		else:
+		   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
+	return(datset)
+
+def datfr_compute_tcwv(datfr,subtyplst=None,varlst=None):
+	if varlst is None: varlst=["datfrindx"]
+	if subtyplst is None: subtyplst=obslib.unique_list(datframe.subtype.values)
+	print(subtyplst)
+	print(varlst)
+	print(datframe)
+	print(datfr.columns)
+	datfr=datfr.assign(TCWV=None)
+	if len(datfr.index) > 0:
+                for indx in datfr.index:
+                    datfr["TCWV"].loc[indx]=numpy.nan
+	exit()
+	return(datframe)
+
+
 #############################################################################################################################
 ### GribAPI and IRIS based functions
 #############################################################################################################################
@@ -401,6 +463,7 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
+<<<<<<< HEAD
 def datfr_extract(datset,datfr,distcol,varlst):
 	indx=dat
 	for varnam in varlst:
@@ -445,6 +508,8 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datfr[varnam].loc[indx]
 	return(datset)
 
+=======
+>>>>>>> 97fd6b6525307cd18231e4e41ef15af22b8c386f
 def xar_dummy(coords,varlst):
 	dims=coords.keys()
 	dimsize={}
@@ -456,7 +521,9 @@ def xar_dummy(coords,varlst):
 		datset[varnam]=xarray.DataArray(data=datarr,coords=coords,dims=dimsize.keys(),name=varnam)
 	return(datset)
 
-def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,reference_time=None,datfrlat="Latitude",datfrlon="Longitude",varlst=None):
+def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,reference_time=None,datfrlat="Latitude",datfrlon="Longitude",varlst=None,subtyplst=None):
+	if varlst is None: varlst=["datfrindx"]
+	if subtyplst is None: subtyplst=obslib.unique_list(datframe.subtype.values)
 	if gridsize is None: gridsize=1.0
 	if lon is None: lon=numpy.arange(0.0,360.0,gridsize)
 	if lat is None: lat=numpy.arange(-90.0,90.0,gridsize)
@@ -465,11 +532,11 @@ def xar_framegrid(datframe,gridsize=None,lon=None,lat=None,lev=None,time=None,re
 	if reference_time is None: reference_time=obslib.pydate()
 	coords=dict(lon=lon,lat=lat,lev=lev,time=time,)
 	dimsize={"lon":len(lon),"lat":len(lat),"lev":len(lev),"time":len(time)}
-	if varlst is None: varlst=["datfrindx"]
 	if "datfrindx" not in varlst: varlst=varlst+["datfrindx"]
 	datset=xar_dummy(coords,varlst)
 	lon=numpy.array([142,])
 	lat=numpy.array([51,])
+	if 50100 in subtyplst and "TCWV" in varlst: datframe=datfr_compute_tcwv(datframe,subtyplst,varlst)
 	datset=datfr_colocate(datset,datframe,gridsize,lon,lat,datfrlat=datfrlat,datfrlon=datfrlon,varlst=varlst)
 	return(datset)
 

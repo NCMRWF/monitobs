@@ -16,6 +16,3 @@ elemlist_:
 brightnessTemperature:
 metdbsubtype: 
 SatID: 
-OBSTORE: ATMS
-longname: ATMS 
-satinstsnsr: snpp-atms,noaa20-atms

@@ -9,5 +9,10 @@ maxindx: 621
 hdrsize: 339
 lutsize: 128
 OBSTORE: Scatwind
+HDRFILE: 
 longname: Scatterometer_Surface_Wind
 satinstsnsr: scatwind
+elemlist_:  
+brightnessTemperature: 
+metdbsubtype: 
+SatID: 

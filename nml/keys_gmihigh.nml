@@ -16,7 +16,4 @@ elemlist_:
 brightnessTemperature:
 metdbsubtype: 
 SatID: 
-OBSTORE: GMIhigh
-longname: GMI_High
-satinstsnsr: gpm1-gmi
 

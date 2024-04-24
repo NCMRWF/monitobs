@@ -20,10 +20,11 @@ print(PDY)
 filenam=infile.split("/")[-1]
 inpath=infile.split("/"+filenam)[0]
 obstype=filenam.split(".")[0].lower()
+subtyplst=[50100,50500]
 print(obstype)
 columns=["obsgroup",  "subtype",  "TCWV", "Latitude", "Longitude", "SatView", "SatID" ]
 
-dataset=modulib.obstore_read_file(inpath,obstype)
+dataset=modulib.obstore_read_file(inpath,obstype,subtyplst=subtyplst)
 datframe=dataset["data"]
 datset=essio.xar_framegrid(datframe,varlst=columns)
 

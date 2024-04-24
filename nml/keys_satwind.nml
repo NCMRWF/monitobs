@@ -9,5 +9,10 @@ maxindx: 621
 hdrsize: 339
 lutsize: 128
 OBSTORE: Satwind
+HDRFILE: 
 longname: Satellite_AMV_Wind
 satinstsnsr: satwind
+elemlist_:  
+brightnessTemperature: 
+metdbsubtype: 
+SatID: 

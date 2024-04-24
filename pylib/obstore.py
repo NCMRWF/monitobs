@@ -973,11 +973,19 @@ def obstore_read_element(obsfile,elist,element,pos_data,record_pos,tcols,nmlfile
         else:
             for i in record_pos:
                 for j in levs:
-                    seekpos=pos_data+((i-1)*tcols)+int(cdc-1)+((j-1)*rdc)
+		    if rdc > 0:
+                    	seekpos=pos_data+((i-1)*tcols)+int(cdc-1)+((j-1)*rdc)
+		    else:
+			###rdc is -32768 for callsign ASCII element CharData###
+			seekpos=pos_data+((i-1)*tcols)+int(cdc-1)+((j-1))
                     if diaglev > 100 : errprint("pos_data=%s,i=%s,tcols=%s,cdc=%s,j=%s,rdc =%s,seekpos = %s"%(pos_data,i,tcols,cdc,j,rdc,seekpos))
-                    obsfile.seek((seekpos-1)*8,0)
+		    if seekpos > 0:
+                    	obsfile.seek((seekpos-1)*8,0)
+                    	data = obsfile.read(data_size)
+		    else:
+			print("Seek position is negative")
+		    	print(seekpos,pos_data,tcols,cdc,rdc,i,j)
                     if diaglev > 100: errprint("Remaining bytes = "+str(obstore_get_tail_length(obsfile,seekpos)))
-                    data = obsfile.read(data_size)
                     #errprint(data_size)
                     errprint("Check point 6: data = %s"%(data))
                     #print(i,j,data_size,frmtstr)
@@ -1348,7 +1356,7 @@ def obs_location(inpath,nmlpath,obstype,filevar=None,maxindx=MAXINDX):
     dataset={"obsgroup":obsgroup, "subtype":subtypegroup, "data":datagroup }
     return(dataset)
 
-def obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX):
+def obstore_read_file(inpath,obstype,subtyplst=None,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX):
     keyinfofile=OBSNML+"/keys_"+obstype+".nml"
     infokeylist=["OBSTORE", "obsgroup","maxindx","hdrsize","lutsize"]
     obstypedic=obslib.get_key_dic(keyinfofile,infokeylist,infodic={})
@@ -1365,7 +1373,9 @@ def obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX
             elistgroup=[None]*batchcount
             datagroup=[None]*batchcount
 	    filedata=pandas.DataFrame()
-            for indx,subtype in enumerate(obstore_read_subtype(infile)[0:],start=1):
+	    if subtyplst is None: subtyplst=obstore_read_subtype(infile)
+	    print(subtyplst)
+            for indx,subtype in enumerate(subtyplst[0:],start=1):
                 elist=obstore_read_batch_elements(infile,indx,nmlfile,maxindx)
                 elistgroup[indx-1]=elist
                 count=0

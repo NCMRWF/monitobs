@@ -17,6 +17,3 @@ elemlist_:
 brightnessTemperature:
 metdbsubtype: 
 SatID: 
-OBSTORE: ABIClr
-longname: GOES_ABI
-satinstsnsr: goes16-abi

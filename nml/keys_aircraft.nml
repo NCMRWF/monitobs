@@ -1,5 +1,5 @@
 keys: information
-obsgroup: 
+obsgroup: 3 
 obsname: aircraft
 gdasname: 
 bufrmtyp: 
@@ -16,6 +16,3 @@ elemlist_:
 brightnessTemperature:
 metdbsubtype: 
 SatID: 
-OBSTORE: Aircraft
-longname: Aircraft
-satinstsnsr aircraft
