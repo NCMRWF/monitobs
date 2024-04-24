@@ -240,11 +240,23 @@ def unique_list(list1):
 	uniquelst=list(set(list1))
 	return(uniquelst)
 
-def unique_int(array,missing=numpy.nan):
+#def unique_int(array,missing=numpy.nan):
+#    intlst=[]
+#    for elem in array:
+        #if elem != missing : 
+#           intlst=intlst+[int(elem)]
+#    int_frm=pandas.DataFrame(intlst,columns=["Data"])
+#    int_arr=int_frm.Data.unique()
+#    return(int_arr)
+
+def unique_int(array,mfactor=1,missing=numpy.nan):
     intlst=[]
     for elem in array:
-        if elem != missing : 
-           intlst=intlst+[int(elem)]
+        if elem != elem or elem == missing :
+		intlst=intlst	#+[elem]
+	else: 
+           if mfactor > 1 : intlst=intlst+[int(elem/mfactor+0.5)*mfactor]
+           else : intlst=intlst+[int(elem)]
     intlst=unique_list(intlst)
     int_frm=pandas.DataFrame(intlst,columns=["Data"])
     int_arr=int_frm.Data.unique()
@@ -267,7 +279,7 @@ def mask_array(a,missing=numpy.nan):
 
 def binsort(a,binmin=numpy.NINF,binmax=numpy.inf,missing=None):
     temp = a.copy()
-    if missing is None: missing=[numpy.nan,"nan",'nan']
+    if missing is None: missing=[numpy.nan,"nan",'nan','NaN']
     if type(missing) is not list: missing=[missing]
     for misval in missing:
     	temp= numpy.ma.masked_where(temp ==misval, temp)
@@ -275,7 +287,7 @@ def binsort(a,binmin=numpy.NINF,binmax=numpy.inf,missing=None):
     temp= numpy.ma.masked_where(temp > binmax, temp)
     temp=temp[~temp.mask] 
     #print(temp)
-    temp=unique_int(temp.flatten())
+    temp=unique_int(temp.flatten(),missing='NaN')
     temp.sort()
     return(temp)
 
@@ -975,15 +987,6 @@ def get_numerics(string_data):
               num_string = ""
     return(numeric_data)
 
-def unique_int(array,mfactor=1,missing=numpy.nan):
-    intlst=[]
-    for elem in array:
-        if elem != missing : 
-           if mfactor > 1 : intlst=intlst+[int(elem/mfactor+0.5)*mfactor]
-           else : intlst=intlst+[int(elem)]
-    int_frm=pandas.DataFrame(intlst,columns=["Data"])
-    int_arr=int_frm.Data.unique()
-    return(int_arr)
 
 def obs_clock_hour(obstime,cylchour):
     sec_of_day=int(cylchour)*3600+obstime

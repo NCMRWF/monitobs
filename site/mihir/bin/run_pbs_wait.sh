@@ -50,7 +50,7 @@ export HOSTPKG=${HOSTPKG}
 export NODE_CNT=${NODE_CNT}
 export JOBSCRIPT=${JOBSCRIPT}
 export JOBCMD="${JOBCMD}"
-export ARGS=${ARGS}
+export ARGS="${ARGS}"
 
 export MODULEPATH="${PKGHOME}/site/${SITE}/modules:\${MODULEPATH}"
 echo \${MODULEPATH}
