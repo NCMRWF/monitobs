@@ -104,20 +104,55 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 		   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
 	return(datset)
 
+def datset_colocate(datset,gridsize,lon,lat):
+        hlfwdth=gridsize/2
+        for latval in lat:
+           for lonval in lon:
+              lonmin=lonval-hlfwdth
+              lonmax=lonval+hlfwdth
+              latmin=latval-hlfwdth
+              latmax=latval+hlfwdth
+              qrystr=str(datfrlat)+" > "+str(latmin)+" and "+datfrlat+" < "+str(latmax)+" and "+datfrlon+" > "+str(lonmin)+" and "+datfrlon+" < "+str(lonmax)
+
+
 def datfr_compute_tcwv(datfr,subtyplst=None,varlst=None):
 	if varlst is None: varlst=["datfrindx"]
 	if subtyplst is None: subtyplst=obslib.unique_list(datframe.subtype.values)
 	print(subtyplst)
 	print(varlst)
-	print(datframe)
-	print(datfr.columns)
+	for column in datfr.columns:
+		for value in datfr[column]:
+	        # Extract numerical value and unit from the string
+	        	num_value, unit = extract_value_and_unit(str(value))
+	        # Print the numerical value and unit
+	       		print("Column: {}, Numerical Value: {}, Unit: {}".format(column,num_value,unit))
+
+    		#print("Column: {}, Data Type: {}".format(column, datfr[column].dtype))
+		#print(f"Column: {column}, Data Type: {df[column].dtype}")
+	#pandas.set_option('display.max_columns', None)
+	#pandas.set_option('display.max_rows', None)
+	print(datfr)
+	print(datfr.columns.values)
 	datfr=datfr.assign(TCWV=None)
 	if len(datfr.index) > 0:
                 for indx in datfr.index:
                     datfr["TCWV"].loc[indx]=numpy.nan
 	exit()
-	return(datframe)
+	return(datfr)
 
+def specific_humidity_from_dewpoint(pressure, dewpoint):
+    e0 = 6.113 
+    c_water = 5423 
+    c_ice = 6139
+    T0 = 273.15
+    pres = pressure.to('hPa').magnitude
+    dew = dewpoint.to('kelvin').magnitude
+    if dew >= T0:
+        c = c_water 
+    else: 
+        c=c_ice
+    q = ((622 * e0)/ pres) * numpy.exp(c * (dew - T0) / (dew * T0))   # g/kg
+    return(q)
 
 #############################################################################################################################
 ### GribAPI and IRIS based functions
@@ -285,6 +320,7 @@ def iri_load_cubes(infile,cnst=None,callback=None,stashcode=None,option=0,dimlst
 
     func = switcher.get(opt, lambda: 'Invalid option')
     cubes = func()
+    print("cubes cubes cubes cubes cubes cubes",cubes)
     if time_cnstlst is not None:
 	timemin = time_cnstlst[0]
 	print("t1 is",timemin)
@@ -463,53 +499,6 @@ def nix_extract(filenam,varlst,dimlst):
 ### XARRAY based functions
 #############################################################################################################################
 
-<<<<<<< HEAD
-def datfr_extract(datset,datfr,distcol,varlst):
-	indx=dat
-	for varnam in varlst:
-		print(varnam)
-
-def datfr_min_indx(datfr,colnam):
-	indx=datfr[datfr[colnam]==datfr[colnam].min()].index[0]
-	return(indx)
-
-def datfr_max_indx(datfr,colnam):
-	indx=datfr[datfr[colnam]==datfr[colnam].max()].index[0]
-	return(indx)
-
-def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude",varlst=None):
-	hlfwdth=gridsize/2
-	datframe=datframe.assign(colocdist=None)
-	for latval in lat:
-	   for lonval in lon:
-	      lonmin=lonval-hlfwdth
-	      lonmax=lonval+hlfwdth
-	      latmin=latval-hlfwdth
-	      latmax=latval+hlfwdth
-	      qrystr=str(datfrlat)+" > "+str(latmin)+" and "+datfrlat+" < "+str(latmax)+" and "+datfrlon+" > "+str(lonmin)+" and "+datfrlon+" < "+str(lonmax)
-	      if datfrlat in datframe:
-	         if datfrlon in datframe:
-	            datfr=datframe.query(qrystr)
-	      if len(datfr.index) > 0:
-		for indx in datfr.index:
-	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
-	        indx=datfr_min_indx(datfr,"colocdist")
-		print("index",indx)
-		print(datfr.loc[indx])
-	      else:
-	        indx=None
-	      if indx is not None:
-		datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
-	      else:
-		datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=numpy.nan
-	      for varnam in varlst:
-		if varnam is not "datfrindx":
-		   if indx is not None:
-			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datfr[varnam].loc[indx]
-	return(datset)
-
-=======
->>>>>>> 97fd6b6525307cd18231e4e41ef15af22b8c386f
 def xar_dummy(coords,varlst):
 	dims=coords.keys()
 	dimsize={}
@@ -585,6 +574,7 @@ def xar_ref_dim(daset,varname,lat=None,lon=None,lev=None):
 	ref_dim['lat']=daset[varname].latitude
 	ref_dim['lon']=daset[varname].longitude
 	ref_dim['lev']=daset[varname].level_height
+	#ref_dim['time']=daset[varname].time
 	#print(ref_dim)
 	#exit()
 	return(ref_dim)
@@ -752,13 +742,13 @@ def xar_vimt(datset,vardic=None,levdim=None,humnam=None,rhonam=None,uwndnam=None
 	v = xar_height_integral(weighted_q_v,levdim) 
 	dataset=xarray.Dataset(
 		data_vars=dict(
-        		u=(["time","latitude", "longitude"], u),
-        		v=(["time","latitude", "longitude"], v),
+        		u=(["latitude", "longitude"], u),
+        		v=(["latitude", "longitude"], v),
     				),
     		coords=dict(
         		longitude=datset[humnam].longitude.values,
         		latitude=datset[humnam].latitude.values,
-        		time=datset[humnam].time.values,
+        		#time=datset[humnam].time.values,
         		#reference_time=datset[humnam].reference_time,
     				),
     		#attrs=dict(

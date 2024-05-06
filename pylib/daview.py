@@ -1914,7 +1914,7 @@ def xar_slice(data,dimnam,dim_min=None,dim_max=None,dim_skip=None):
 	return(data)
 
 def xar_ipw(datset,levdim,rhonam,humnam):
-	print("xar_ipw",datset["time"].attrs)
+	#print("xar_ipw",datset["time"].attrs)
 	print("xar_ipw_",datset["level_height"].attrs)
 	weighted_q = essio.xar_qrhodh(datset,levdim,rhonam,humnam)
 	data = weighted_q.sum(levdim)
@@ -1923,13 +1923,13 @@ def xar_ipw(datset,levdim,rhonam,humnam):
         dataset=xarray.Dataset(
                 data_vars=dict(
 			 #ipw=data.values
-                        ipw=(["time","latitude", "longitude"], data),
+                        ipw=(["latitude", "longitude"], data),
                                 ),
                 coords=dict(
                 	
 		#        lon=data.longitude.values,
                 #        lat=data.latitude.values,
-			time=datset.time.values,
+			#time=datset.time.values,
                         longitude=datset.longitude.values,
                         latitude=datset.latitude.values,
 				),
@@ -1952,8 +1952,8 @@ def xar_plot_ose_scalar(plotdic,axes=None):
 	
 	result_ctl = data_ctl
 	result_exp = data_exp
-	result_d = result_exp - result_ctl
-        result_diff = essio.xar_regrid(result_d)
+	result_diff = result_exp - result_ctl
+        #result_diff = essio.xar_regrid(result_d)
 	#result_ctl = data_ctl[plotvar]
 	#result_exp = data_exp[plotvar]
 	#result_diff = result_exp - result_ctl
@@ -2041,7 +2041,7 @@ def xar_plot_ose_scalar_withobs(plotdic,axes=None):
         plot=[None]*4
         axlbly=[None]*4
 
-        plot[0]=result_obs.plot(ax=axes[0],vmin=0,vmax=150,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+        plot[0]=result_obs.plot(ax=axes[0],cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
         m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[0])
         m.drawcoastlines()
         axlbly[0]=axes[0].text(-0.2, 0.5, axlbl_y_obs, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)

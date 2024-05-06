@@ -15,7 +15,7 @@ if len(sys.argv) > 2:
 else:
     print("Input date is not provided")
 
-print(PDY)
+#print(PDY)
 
 filenam=infile.split("/")[-1]
 inpath=infile.split("/"+filenam)[0]
@@ -30,8 +30,8 @@ datset=essio.xar_framegrid(datframe,varlst=columns)
 
 plotdir="/scratch/meena/validation"
 obslib.mkdir(plotdir)
-outfile=plotdir+'/sattcwv_{}.nc'.format(PDY)
-ncfile = essio.nix_write(datset,outfile)
+#outfile=plotdir+'/sattcwv_{}.nc'.format(PDY)
+#ncfile = essio.nix_write(datset,outfile)
 print(datset)
 
 exit()
