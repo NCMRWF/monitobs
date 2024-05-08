@@ -20,7 +20,7 @@ else:
 filenam=infile.split("/")[-1]
 inpath=infile.split("/"+filenam)[0]
 obstype=filenam.split(".")[0].lower()
-subtyplst=[50100,50500]
+#subtyplst=[50100,50500]
 print(obstype)
 columns=["obsgroup",  "subtype",  "TCWV", "Latitude", "Longitude", "SatView", "SatID" ]
 
