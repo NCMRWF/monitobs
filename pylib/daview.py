@@ -41,6 +41,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as pyplot
 pyplot.switch_backend('agg')
 import matplotlib.colors as colors
+from matplotlib.colors import Normalize
 import matplotlib.cm as mplcm
 from mpl_toolkits.basemap import Basemap, shiftgrid, addcyclic
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -767,7 +768,7 @@ def mpl_plot_latlon(data,plotfile,tagmark="",lblst=[],text="",textpos=(0.25, -0.
     #colors = (0,0,0)
     area = 1.0      #numpy.pi*
     alpha=0.5
-    parallels = numpy.arange(-80.,90,20.)
+    parallels = numpy.arange(-90.,90,20.)
     meridians = numpy.arange(-180.,180.,30.)
     #parallels = numpy.arange(-80.,90,20.)
     #meridians = numpy.arange(-180.,180.,30.)
@@ -2180,8 +2181,8 @@ def xar_plot_ose_wind_preslev(plotdic):
         m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[0])
         m.drawcoastlines()
         axes[0].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)
-        #c_ctl=axes[0].quiver(lon[::40], lat[::40], u_ctl.isel(time=0).values[::40,::40 ], v_ctl.isel(time=0).values[::40,::40],mag_ctl[::40,::40],cmap='jet')
-        c_ctl=axes[0].quiver(lon[::10], lat[::10], u_ctl.values[::10,::10], v_ctl.values[::10,::10],mag_ctl[::10,::10],cmap='jet',scale=300)
+        c_ctl=axes[0].quiver(lon[::40], lat[::40], u_ctl.values[::40,::40 ], v_ctl.values[::40,::40],mag_ctl[::40,::40],cmap='jet')
+        #c_ctl=axes[0].quiver(lon[::10], lat[::10], u_ctl.values[::10,::10], v_ctl.values[::10,::10],mag_ctl[::10,::10],cmap='jet')
         cbar=pyplot.colorbar(c_ctl,ax=axes[0])
         cbar.ax.tick_params(labelsize=15)
         axes[0].tick_params(labelsize=40)
@@ -2190,8 +2191,8 @@ def xar_plot_ose_wind_preslev(plotdic):
         m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[1])
         m.drawcoastlines()
         axes[1].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes,fontsize=17)
-        #c_exp=axes[1].quiver(lon[::40], lat[::40], u_exp.isel(time=0).values[::40,::40 ], v_exp.isel(time=0).values[::40,::40],mag_exp[::40,::40],cmap='jet')
-        c_exp=axes[1].quiver(lon[::10], lat[::10], u_exp.values[::10,::10], v_exp.values[::10,::10],mag_exp[::10,::10],cmap='jet',scale=300)
+        c_exp=axes[1].quiver(lon[::40], lat[::40], u_exp.values[::40,::40 ], v_exp.values[::40,::40],mag_exp[::40,::40],cmap='jet')
+        #c_exp=axes[1].quiver(lon[::10], lat[::10], u_exp.values[::10,::10], v_exp.values[::10,::10],mag_exp[::10,::10],cmap='jet')
         cbar=pyplot.colorbar(c_exp,ax=axes[1])
         cbar.ax.tick_params(labelsize=15)
         axes[1].annotate("(b)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
@@ -2204,8 +2205,8 @@ def xar_plot_ose_wind_preslev(plotdic):
         m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[2])
         m.drawcoastlines()
         axes[2].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2].transAxes,fontsize=17)
-        #c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff.isel(time=0).values[::20,::20], v_diff.isel(time=0).values[::20,::20],mag_diff[::20,::20],cmap='RdBu_r')
-        c_diff=axes[2].quiver(lon[::10], lat[::10], u_diff.values[::10,::10], v_diff.values[::10,::10],mag_diff[::10,::10],cmap='jet',scale=300)
+        c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff.values[::20,::20], v_diff.values[::20,::20],mag_diff[::20,::20],cmap='jet')
+        #c_diff=axes[2].quiver(lon[::10], lat[::10], u_diff.values[::10,::10], v_diff.values[::10,::10],mag_diff[::10,::10],cmap='jet',scale=400)
         #c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff[::20,::20], v_diff[::20,::20],mag_diff[::20,::20],cmap='jet',scale=400)
         cbar=pyplot.colorbar(c_diff,ax=axes[2])
         cbar.ax.tick_params(labelsize=15)
@@ -2227,62 +2228,79 @@ def xar_plot_ose_vector3x3(plotdic):
         	axlbl_y_ctl=plotdic["ctlname"]
        		axlbl_y_exp=plotdic["expname"]
 
-	        u_ctl1 = data_ctl.x_wind
-	        v_ctl1 = data_ctl.y_wind
-        	u_exp1 = data_exp.x_wind
-        	v_exp1 = data_exp.y_wind
+	        u_ctl1 = data_ctl.u
+	        v_ctl1 = data_ctl.v
+        	u_exp1 = data_exp.u
+        	v_exp1 = data_exp.v
 		
 		u_ctl=u_ctl1.isel(time=i)
 		v_ctl=v_ctl1.isel(time=i)
 		u_exp=u_exp1.isel(time=i)
 		v_exp=v_exp1.isel(time=i)
-        	u_diff = u_exp-u_ctl
-        	v_diff = v_exp-v_ctl
 	
         	lon=data_ctl.longitude
         	lat=data_ctl.latitude
 
        		mag_ctl = numpy.sqrt(u_ctl.values**2 + v_ctl.values**2)
        		mag_exp = numpy.sqrt(u_exp.values**2 + v_exp.values**2)
-        	mag_diff = numpy.sqrt(u_diff.values**2 + v_diff.values**2)
 		label = [['(a)','(b)','(c)'],
 			 ['(d)','(e)','(f)'],
 			 ['(g)','(h)','(i)']]
 
 		pltindx=j+0
-	        #m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[0,i])
-	        m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[0,i])
+	        m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[0,i])
+	        #m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[0,i])
 	        m.drawcoastlines()
 	        axlbly[pltindx]=axes[0,i].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0,i].transAxes,fontsize=17)
                 if i==1 or i==2:
 			axlbly[pltindx].set_text('')
-        	plot[pltindx]=axes[0,i].quiver(lon[::10], lat[::10], u_ctl.values[::10,::10], v_ctl.values[::10,::10],mag_ctl[::10,::10],cmap='jet',scale=100)
+        	plot[pltindx]=axes[0,i].quiver(lon[::40], lat[::40], u_ctl.values[::40,::40], v_ctl.values[::40,::40],mag_ctl[::40,::40],cmap='jet')
         	cbar=pyplot.colorbar(plot[pltindx],ax=axes[0,i])
         	cbar.ax.tick_params(labelsize=15)
         	axes[0,i].tick_params(labelsize=40)
         	axes[0,i].annotate(label[0][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 		
 		pltindx=j+1
-        	#m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[1,i])
-	        m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[1,i])
+        	m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[1,i])
+	        #m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[1,i])
         	m.drawcoastlines()
         	axlbly[pltindx]=axes[1,i].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1,i].transAxes,fontsize=17)
                 if i==1 or i==2:
 			axlbly[pltindx].set_text('')
-        	plot[pltindx]=axes[1,i].quiver(lon[::10], lat[::10], u_exp.values[::10,::10], v_exp.values[::10,::10],mag_exp[::10,::10],cmap='jet',scale=100)
+        	plot[pltindx]=axes[1,i].quiver(lon[::40], lat[::40], u_exp.values[::40,::40], v_exp.values[::40,::40],mag_exp[::40,::40],cmap='jet')
         	cbar=pyplot.colorbar(plot[pltindx],ax=axes[1,i])
         	cbar.ax.tick_params(labelsize=15)
         	axes[1,i].annotate(label[1][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 
 		pltindx=j+2
-        	#m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[2,i])
-	        m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[2,i])
+        	#u_exp_mask = numpy.where(mag_exp<100,numpy.nan,u_exp)
+	        #v_exp_mask = numpy.where(mag_exp<100,numpy.nan,v_exp)
+        	#u_ctl_mask = numpy.where(mag_ctl<100,numpy.nan,u_ctl)
+        	#v_ctl_mask = numpy.where(mag_ctl<100,numpy.nan,v_ctl)
+        	#u_diff = u_exp_mask-u_ctl_mask
+        	#print(u_diff)
+        	#v_diff = v_exp_mask-v_ctl_mask
+        	u_diff = u_exp-u_ctl
+        	v_diff = v_exp-v_ctl
+
+		mag_diff = numpy.sqrt(u_diff**2 + v_diff**2)
+		#print("mean",numpy.mean(mag_diff))
+		#print("standard deviation",numpy.std(mag_diff))
+		mean=mag_diff.mean().values
+		std=mag_diff.std().values
+		sum1=mean+(2*std)
+		print("sum",sum1)
+		norm = Normalize(vmin=0, vmax=23)
+		#mag_diff = numpy.sqrt(u_diff.values**2 + v_diff.values**2)
+        	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[2,i])
+	        #m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[2,i])
         	m.drawcoastlines()
         	axlbly[pltindx]=axes[2,i].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2,i].transAxes,fontsize=17)
                 if i==1 or i==2:
 			axlbly[pltindx].set_text('')
-        	plot[pltindx]=axes[2,i].quiver(lon[::10], lat[::10], u_diff.values[::10,::10], v_diff.values[::10,::10],mag_diff[::10,::10],cmap='jet',scale=25)
+        	plot[pltindx]=axes[2,i].quiver(lon[::20], lat[::20], u_diff[::20,::20], v_diff[::20,::20],mag_diff[::20,::20],cmap='jet',norm=norm)
         	cbar=pyplot.colorbar(plot[pltindx],ax=axes[2,i])
+		#cbar.set_clim(0, mean + std)
         	cbar.ax.tick_params(labelsize=15)
         	axes[2,i].annotate(label[2][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
         
