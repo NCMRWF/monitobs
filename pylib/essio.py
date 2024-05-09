@@ -74,6 +74,10 @@ def datfr_max_indx(datfr,colnam):
 def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat="Latitude",datfrlon="Longitude",varlst=None):
 	hlfwdth=gridsize/2
 	datframe=datframe.assign(colocdist=None)
+	#### initialisation of variables ####
+	for varnam in varlst:
+		   datset[varnam]=numpy.nan
+	#####################################
 	for latval in lat:
 	   for lonval in lon:
 	      lonmin=lonval-hlfwdth
@@ -84,6 +88,7 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 	      if datfrlat in datframe:
 	         if datfrlon in datframe:
 	            datfr=datframe.query(qrystr)
+	      print(datfr)
 	      if len(datfr.index) > 0:
 		for indx in datfr.index:
 	            datfr["colocdist"].loc[indx]=math.sqrt((datfr[datfrlat].loc[indx]-latval)**2+(datfr[datfrlon].loc[indx]-lonval)**2)
@@ -94,14 +99,15 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 		print(datfr.loc[indx])
 	      else:
 	        indx=None
+	      print(indx)
 	      for varnam in varlst:
 		if indx is not None:
 		   if varnam is "datfrindx":
 	      		datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
 		   else:
 			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datfr[varnam].loc[indx]
-		else:
-		   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
+		#else:
+		#   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
 	return(datset)
 
 def datset_colocate(datset,gridsize,lon,lat):
@@ -137,7 +143,7 @@ def datfr_compute_tcwv(datfr,subtyplst=None,varlst=None):
 	if len(datfr.index) > 0:
                 for indx in datfr.index:
                     datfr["TCWV"].loc[indx]=numpy.nan
-	exit()
+	#exit()
 	return(datfr)
 
 def specific_humidity_from_dewpoint(pressure, dewpoint):
