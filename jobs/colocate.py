@@ -28,9 +28,10 @@ print(obstype)
 columns=["obsgroup",  "subtype",  "TCWV", "Latitude", "Longitude", "SatView", "SatID" ]
 
 dataset=modulib.obstore_read_file(inpath,obstype,subtyplst=subtyplst)
+print(dataset)
 datframe=dataset["data"]
 datset=essio.xar_framegrid(datframe,varlst=columns)
-
+print(datset)
 plotdir="/scratch/meena/validation"
 obslib.mkdir(plotdir)
 #outfile=plotdir+'/sattcwv_{}.nc'.format(PDY)

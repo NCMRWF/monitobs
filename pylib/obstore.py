@@ -865,7 +865,13 @@ def obstore_read_batch_elements(obsfile,obsidx,nmlfile=NML_OBS_INDX,maxindx=MAXI
     #print(cdc_sortlist)
     missing=[numpy.nan,-4481081629233643520,4607182418800017408,-1073741820.0,-1073741824.0,-1.07374182e+09,-3.2768e+04,-32768.0,-32768,0.]
     cdc_sortlist=obslib.binsort(cdc_sortlist,binmin=1.0,missing=missing)
-    subtype=obstore_read_subtype(obsfile)[obsidx-1]
+    print(obsidx)
+    subtyps=obstore_read_subtype(obsfile)
+    if len(subtyps) > 1: 
+	subtype=subtyps[obsidx-1]
+    else:
+	subtype=subtyps[0]
+    print(subtype)
     #print(cdc_sortlist)
     for i in cdc_sortlist:
       #print(i)
@@ -1377,7 +1383,10 @@ def obstore_read_file(inpath,obstype,subtyplst=None,nmlpath=OBSNML,filevar=None,
 	    print(subtyplst)
             for indx,subtype in enumerate(subtyplst[0:],start=1):
                 elist=obstore_read_batch_elements(infile,indx,nmlfile,maxindx)
-                elistgroup[indx-1]=elist
+		if len(elistgroup) > 1:
+                	elistgroup[indx-1]=elist
+		else:
+			elistgroup[0]=elist
                 count=0
                 elenams=elist.Element.values
 		#print(elist)
@@ -1388,13 +1397,16 @@ def obstore_read_file(inpath,obstype,subtyplst=None,nmlpath=OBSNML,filevar=None,
                         if count == 1:
                             btchdata=elemdata
                         else:
-			    #print(elemdata)
+			    print(elemdata)
                             btchdata=btchdata.join(elemdata)
-			    #print(btchdata)
+			    print(btchdata)
 		btchdata=pandas.DataFrame(data=subtype,index=btchdata.index,columns=["subtype"]).join(btchdata)
 	        btchdata=pandas.DataFrame(data=obsgroup,index=btchdata.index,columns=["obsgroup"]).join(btchdata)
-	        filedata=filedata.append(btchdata, ignore_index=True)
+	        #filedata=filedata.append(btchdata)
+		filedata=filedata.append(btchdata, ignore_index=True)
             #    datagroup[indx-1]=data
+    #print(filedata)
+    #filedata = panda.concat(filedata, ignore_index=True)
     #print(filedata)
     dataset={"obsgroup":obsgroup, "subtype":subtypegroup, "data":filedata }
     return(dataset)
