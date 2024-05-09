@@ -57,6 +57,16 @@ import umrlib
 ### ImportError: No module named _multiarray_umath
 ####################################################
 
+def dset_latlon_assign(datset, lon, lat, datval):
+    indx = pairwise_distances_argmin(X=[[lon, lat]], Y=numpy.c_[datset['lon'].values.ravel(), datset['lat'].values.ravel()])
+    i0, j0 = numpy.unravel_index(indx, (datset['lon'].shape))
+    datset.isel(x=j0, y=i0)=datval
+    return datset
+
+def dset_latlon_extract(datset, lon, lat):
+    indx = pairwise_distances_argmin(X=[[lon, lat]], Y=numpy.c_[datset['lon'].values.ravel(), datset['lat'].values.ravel()])
+    i0, j0 = numpy.unravel_index(indx, (datset['lon'].shape))
+    return datset.isel(x=j0, y=i0).squeeze()
 
 def datfr_extract(datset,datfr,distcol,varlst):
 	indx=dat
@@ -107,7 +117,7 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 		   else:
 			datval=datfr[varnam].loc[indx]
 			print(datval)
-			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datval
+			datset[varnam].loc[{"lat":latval,"lon":lonval,"lev":0.0, "time":0.0}]=datval
 		#else:
 		#   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
 	return(datset)
