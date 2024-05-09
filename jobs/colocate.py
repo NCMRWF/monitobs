@@ -3,6 +3,7 @@ import sys,os
 import modulib
 import essio
 import obslib
+import numpy as np
 
 if len(sys.argv) > 1:
     infile = sys.argv[1]
@@ -20,7 +21,9 @@ else:
 filenam=infile.split("/")[-1]
 inpath=infile.split("/"+filenam)[0]
 obstype=filenam.split(".")[0].lower()
-subtyplst=[50100,50500]
+#subtyplst=[50100,50500]
+#subtyplst=[50500,50100]
+subtyplst=None
 print(obstype)
 columns=["obsgroup",  "subtype",  "TCWV", "Latitude", "Longitude", "SatView", "SatID" ]
 
@@ -32,7 +35,15 @@ plotdir="/scratch/meena/validation"
 obslib.mkdir(plotdir)
 #outfile=plotdir+'/sattcwv_{}.nc'.format(PDY)
 #ncfile = essio.nix_write(datset,outfile)
+# Iterate over each value in the TCWV variable
+for value in datset['obsgroup'].values.flatten():
+    if not np.isnan(value):
+        print(value)
+exit()
 print(datset)
-
+a=datset.TCWV
+print(a)
+print(np.nanmax(a))
+print(np.nanmin(a))
 exit()
 
