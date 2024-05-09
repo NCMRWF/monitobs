@@ -155,7 +155,10 @@ def datfr_compute_tcwv(datfr,subtyplst=None,varlst=None):
 	if len(datfr.index) > 0:
                 for indx in datfr.index:
                     datfr["TCWV"].loc[indx]=numpy.nan
+<<<<<<< HEAD
 	#exit()
+=======
+>>>>>>> fe8021709c1df5a232def25e3d2954ed001e7006
 	return(datfr)
 
 def specific_humidity_from_dewpoint(pressure, dewpoint):

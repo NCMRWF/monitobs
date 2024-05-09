@@ -29,11 +29,17 @@ print(obstype)
 columns=["obsgroup",  "subtype",  "TCWV", "Latitude", "Longitude", "SatView", "SatID" ]
 
 dataset=modulib.obstore_read_file(inpath,obstype,subtyplst=subtyplst)
+print(dataset)
 datframe=dataset["data"]
 datset=essio.xar_framegrid(datframe,varlst=columns)
+<<<<<<< HEAD
 
 #plotdir="/scratch/meena/validation"
 plotdir="/home/"+user+"/data/academic/meena_msc/postprocessed/validation"
+=======
+print(datset)
+plotdir="/scratch/meena/validation"
+>>>>>>> fe8021709c1df5a232def25e3d2954ed001e7006
 obslib.mkdir(plotdir)
 #outfile=plotdir+'/sattcwv_{}.nc'.format(PDY)
 #ncfile = essio.nix_write(datset,outfile)

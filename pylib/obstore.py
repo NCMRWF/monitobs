@@ -1397,13 +1397,16 @@ def obstore_read_file(inpath,obstype,subtyplst=None,nmlpath=OBSNML,filevar=None,
                         if count == 1:
                             btchdata=elemdata
                         else:
-			    #print(elemdata)
+			    print(elemdata)
                             btchdata=btchdata.join(elemdata)
-			    #print(btchdata)
+			    print(btchdata)
 		btchdata=pandas.DataFrame(data=subtype,index=btchdata.index,columns=["subtype"]).join(btchdata)
 	        btchdata=pandas.DataFrame(data=obsgroup,index=btchdata.index,columns=["obsgroup"]).join(btchdata)
-	        filedata=filedata.append(btchdata, ignore_index=True)
+	        #filedata=filedata.append(btchdata)
+		filedata=filedata.append(btchdata, ignore_index=True)
             #    datagroup[indx-1]=data
+    #print(filedata)
+    #filedata = panda.concat(filedata, ignore_index=True)
     #print(filedata)
     dataset={"obsgroup":obsgroup, "subtype":subtypegroup, "data":filedata }
     return(dataset)
