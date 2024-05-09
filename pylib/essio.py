@@ -105,7 +105,9 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 		   if varnam is "datfrindx":
 	      		datset["datfrindx"].loc[{"lat":latval,"lon":lonval}]=indx
 		   else:
-			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datfr[varnam].loc[indx]
+			datval=datfr[varnam].loc[indx]
+			print(datval)
+			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datval
 		#else:
 		#   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
 	return(datset)
