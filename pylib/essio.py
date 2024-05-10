@@ -117,6 +117,7 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 		   else:
 			datval=datfr[varnam].loc[indx]
 			print(datval)
+			print(datset[varnam])
 			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datval
 		#else:
 		#   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
