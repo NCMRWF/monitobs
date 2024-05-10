@@ -60,7 +60,7 @@ import umrlib
 def dset_latlon_assign(datset, lon, lat, datval):
     indx = pairwise_distances_argmin(X=[[lon, lat]], Y=numpy.c_[datset['lon'].values.ravel(), datset['lat'].values.ravel()])
     i0, j0 = numpy.unravel_index(indx, (datset['lon'].shape))
-    datset.isel(x=j0, y=i0)=datval
+    #datset.loc[x=j0, y=i0]=datval
     return datset
 
 def dset_latlon_extract(datset, lon, lat):
@@ -117,7 +117,7 @@ def datfr_colocate(datset,datframe,gridsize,lon,lat,lev=None,time=None,datfrlat=
 		   else:
 			datval=datfr[varnam].loc[indx]
 			print(datval)
-			datset[varnam].loc[{"lat":latval,"lon":lonval,"lev":0.0, "time":0.0}]=datval
+			datset[varnam].loc[{"lat":latval,"lon":lonval}]=datval
 		#else:
 		#   datset[varnam].loc[{"lat":latval,"lon":lonval}]=numpy.nan
 	return(datset)
@@ -155,10 +155,6 @@ def datfr_compute_tcwv(datfr,subtyplst=None,varlst=None):
 	if len(datfr.index) > 0:
                 for indx in datfr.index:
                     datfr["TCWV"].loc[indx]=numpy.nan
-<<<<<<< HEAD
-	#exit()
-=======
->>>>>>> fe8021709c1df5a232def25e3d2954ed001e7006
 	return(datfr)
 
 def specific_humidity_from_dewpoint(pressure, dewpoint):
