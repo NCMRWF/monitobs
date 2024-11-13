@@ -236,6 +236,32 @@ def str_list_index(val,listin):
 	indx = numpy.where(numpy.array(listin)==str(val))[0][0]
 	return(indx)
 
+def unique_list(list1):
+	uniquelst=list(set(list1))
+	return(uniquelst)
+
+#def unique_int(array,missing=numpy.nan):
+#    intlst=[]
+#    for elem in array:
+        #if elem != missing : 
+#           intlst=intlst+[int(elem)]
+#    int_frm=pandas.DataFrame(intlst,columns=["Data"])
+#    int_arr=int_frm.Data.unique()
+#    return(int_arr)
+
+def unique_int(array,mfactor=1,missing=numpy.nan):
+    intlst=[]
+    for elem in array:
+        if elem != elem or elem == missing :
+		intlst=intlst	#+[elem]
+	else: 
+           if mfactor > 1 : intlst=intlst+[int(elem/mfactor+0.5)*mfactor]
+           else : intlst=intlst+[int(elem)]
+    intlst=unique_list(intlst)
+    int_frm=pandas.DataFrame(intlst,columns=["Data"])
+    int_arr=int_frm.Data.unique()
+    return(int_arr)
+
 def nan_sort(a):
     temp = a.copy()
     temp= numpy.ma.masked_where(temp ==-3.2768e+04, temp)
@@ -251,26 +277,19 @@ def mask_array(a,missing=numpy.nan):
     #temp = numpy.ma.masked_object(temp,missing)
     return(arry)
 
-def binsort(a,binmin=numpy.NINF,binmax=numpy.inf,missing=numpy.nan):
+def binsort(a,binmin=numpy.NINF,binmax=numpy.inf,missing=None):
     temp = a.copy()
-    temp= numpy.ma.masked_where(temp =="nan", temp)
-    temp= numpy.ma.masked_where(temp =='nan', temp)
-    temp= numpy.ma.masked_where(temp ==missing, temp)
-    #temp= numpy.ma.masked_where(temp ==str(missing), temp)
+    if missing is None: missing=[numpy.nan,"nan",'nan','NaN']
+    if type(missing) is not list: missing=[missing]
+    for misval in missing:
+    	temp= numpy.ma.masked_where(temp ==misval, temp)
     temp= numpy.ma.masked_where(temp < binmin, temp)
     temp= numpy.ma.masked_where(temp > binmax, temp)
     temp=temp[~temp.mask] 
+    #print(temp)
+    temp=unique_int(temp.flatten(),missing='NaN')
     temp.sort()
     return(temp)
-
-def unique_int(array,missing=numpy.nan):
-    intlst=[]
-    for elem in array:
-        if elem != missing : 
-           intlst=intlst+[int(elem)]
-    int_frm=pandas.DataFrame(intlst,columns=["Data"])
-    int_arr=int_frm.Data.unique()
-    return(int_arr)
 
 def str_zfill(intval,padlen):
     return(str(intval).zfill(padlen))
@@ -506,13 +525,14 @@ def pydate(datestring=None,cylcdate=None,date=None,time=None,year=None,month=01,
 		second=int(time[4:6])
 	if year is not None: 
 		year=int(year)
-    		month=int(month)
-    		day=int(day)
-		hour=int(hour)
-		minute=int(minute)
-		second=int(second)
 	else:
-		print("Essential date information is missing:")
+		year=int(1970)
+		#print("Essential date information is missing:")
+    	month=int(month)
+    	day=int(day)
+	hour=int(hour)
+	minute=int(minute)
+	second=int(second)
 	return(pydatetime(year,month,day,hour,minute,second))
   
 def fmtdatetime(fmtstr,date=None, year=None, month=None, day=None, hour=00, minute=00, second=00):
@@ -967,15 +987,6 @@ def get_numerics(string_data):
               num_string = ""
     return(numeric_data)
 
-def unique_int(array,mfactor=1,missing=numpy.nan):
-    intlst=[]
-    for elem in array:
-        if elem != missing : 
-           if mfactor > 1 : intlst=intlst+[int(elem/mfactor+0.5)*mfactor]
-           else : intlst=intlst+[int(elem)]
-    int_frm=pandas.DataFrame(intlst,columns=["Data"])
-    int_arr=int_frm.Data.unique()
-    return(int_arr)
 
 def obs_clock_hour(obstime,cylchour):
     sec_of_day=int(cylchour)*3600+obstime
@@ -988,11 +999,33 @@ def clock_24_hour(hour):
     if hour < 0 or hour > 24 : clock_24_hour(hour)
     return(hour)
 
+def remove_whitespace( x ):
+    if isinstance( x, basestring ):
+        return x.strip()
+    else:
+        return x
+
+def panda_strip(x):
+    r =[]
+    for y in x:
+        if isinstance(y, str):
+            y = y.strip()
+        r.append(y)
+    return(pandas.Series(r))
+
 def get_key_info(nmlfile,key="obsgroup"):
-    print(nmlfile)
-    nmlinfo=pandas.read_csv(nmlfile, delimiter=': ',engine='python')
+    #print(nmlfile)
+    nmlinfo=pandas.read_csv(nmlfile, delimiter=':',engine='python')
+    nmlinfo=nmlinfo.apply(panda_strip)
+    #print(nmlinfo)
     if key in nmlinfo["keys"].values:
-    	keyinfo=nmlinfo.query("keys == @key").information.values[0]
+	dicselect=nmlinfo.query("keys == @key")
+	#print(dicselect)
+    	keyinfo=dicselect.iloc[:, 1]
+    	#keyinfo=dicselect["information"]
+  	#keyinfo=getattr(dicselect,"information")
+	#print(keyinfo)
+	keyinfo=keyinfo.values[0]
     else:
     	print("Key '"+str(key)+"' not found")
     	print(nmlinfo["keys"].values)
@@ -1011,9 +1044,10 @@ def get_key_dic(keyinfofile,keylist,infodic=None):
     	for key in keylist:
     		infodic[key]=get_key_info(keyinfofile,key)
    else:
+	print("Key Info Namelist File is not available")
 	#print("File not found: "+keyinfofile)
-    	srcdic=obsdic.obstype[obstype]
-    	infodic=srcdic.copy()
+    	#srcdic=obsdic.obstype[obstype]
+    	#infodic=srcdic.copy()
    return(infodic)
 
 def get_elist(obstypnam,obstypnml,keynml):

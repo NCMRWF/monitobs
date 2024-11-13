@@ -1,9 +1,18 @@
 keys: information
+obsgroup: 
 obsname: ssmis
 gdasname: 
 bufrmtyp: 
-obsubtyp:  
-elemcnt: 
+obsubtyplst: [,] 
+elemcntlst: [,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
 OBSTORE: SSMIS
+HDRFILE: 
 longname: SSMIS 
 satinstsnsr: dmspf17-ssmis
+elemlist_:  
+brightnessTemperature: 
+metdbsubtype: 
+SatID: 

@@ -31,6 +31,7 @@ module load gnu/pyke/1.1.1
 module load gnu/xarray/0.11.3
 module load gnu/pytz/2016.4
 module load gnu/pyparsing/2.2.2
+module load gnu/pygrib/2.1.3.np14
 
 #module load gnu/netcdf4/1.5.3-netcdf4.6.0hdf51.10.0
 #module load gnu/lib/netcdf_c_f_cxx/4.6.1_4.4.4_4.3.0

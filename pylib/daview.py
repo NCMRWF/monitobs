@@ -41,6 +41,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as pyplot
 pyplot.switch_backend('agg')
 import matplotlib.colors as colors
+from matplotlib.colors import Normalize
 import matplotlib.cm as mplcm
 from mpl_toolkits.basemap import Basemap, shiftgrid, addcyclic
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -767,7 +768,7 @@ def mpl_plot_latlon(data,plotfile,tagmark="",lblst=[],text="",textpos=(0.25, -0.
     #colors = (0,0,0)
     area = 1.0      #numpy.pi*
     alpha=0.5
-    parallels = numpy.arange(-80.,90,20.)
+    parallels = numpy.arange(-90.,90,20.)
     meridians = numpy.arange(-180.,180.,30.)
     #parallels = numpy.arange(-80.,90,20.)
     #meridians = numpy.arange(-180.,180.,30.)
@@ -1914,40 +1915,35 @@ def xar_slice(data,dimnam,dim_min=None,dim_max=None,dim_skip=None):
 	return(data)
 
 def xar_ipw(datset,levdim,rhonam,humnam):
-	weighted_q = xar_qrhodh(datset,levdim,rhonam,humnam)
+	#print("xar_ipw",datset["time"].attrs)
+	print("xar_ipw_",datset["level_height"].attrs)
+	weighted_q = essio.xar_qrhodh(datset,levdim,rhonam,humnam)
 	data = weighted_q.sum(levdim)
+	print("data",data)
+	print("data_coords",data.coords)
         dataset=xarray.Dataset(
                 data_vars=dict(
-                        ipw=(["lat", "lon"], data),
+			 #ipw=data.values
+                        ipw=(["latitude", "longitude"], data),
                                 ),
                 coords=dict(
-                        lon=datset[humnam].longitude.values,
-                        lat=datset[humnam].latitude.values,
+                	
+		#        lon=data.longitude.values,
+                #        lat=data.latitude.values,
+			#time=datset.time.values,
+                        longitude=datset.longitude.values,
+                        latitude=datset.latitude.values,
 				),
-				)	
+				)
+	for coords in data.coords:
+		dataset[coords].attrs = data[coords].attrs
+		print("dataset in ipw",data[coords].attrs)
+	for var in dataset.data_vars:
+		dataset[var].attrs["units"] = 'kg m-2'		
 	return(dataset)
 
-def xar_regrid(datset,varname,refer=None,q=None,lon=None,lat=None,lev=None):
-	if refer is not None:
-	   if datset[refer] is not None:
-		lon = datset[refer].longitude
-		lat = datset[refer].latitude
-		#lev = datset[refer].level_height
-	data= datset[varname]
-	datanew=data.interp(latitude=lat, longitude=lon)
-	#datanew = datanew.interp(level_height=lev)
-        #new_datset = datset.copy()
-        datset[varname] = datanew	
-	#datset[varname]=datanew
-	#if varname=="x_wind_int":
-		#datset[varname] = datset['x_wind'].interp(latitude=lat, longitude=lon)
-	#else:
-		#datset[varname] = datset['y_wind'].interp(latitude=lat, longitude=lon)
-	return(datset)
 
-
-
-def xar_plot_ose_scalar(plotdic):
+def xar_plot_ose_scalar(plotdic,axes=None):
 	data_ctl=plotdic["data_ctl"]
 	data_exp=plotdic["data_exp"]
 	plotfile=plotdic["plotfile"]
@@ -1958,39 +1954,137 @@ def xar_plot_ose_scalar(plotdic):
 	result_ctl = data_ctl
 	result_exp = data_exp
 	result_diff = result_exp - result_ctl
+        #result_diff = essio.xar_regrid(result_d)
+	#result_ctl = data_ctl[plotvar]
+	#result_exp = data_exp[plotvar]
+	#result_diff = result_exp - result_ctl
+	#print(result_d)
+	#result_dat=result_d.to_dataset(name=plotvar)
+	#print(result_dat)
+	#result_diff = essio.xar_regrid(result_d)
+	#print(result_diff)
+	#result_diff=result_regrid[plotvar]
+	#print(result_diff)
 	#ipw_ctl = data_ctl.ipw
 	#ipw_exp = data_exp.ipw
 	#data_diff = data_exp - data_ctl
 	#ipw_diff = ipw_exp - ipw_ctl
 
-	fig, axes = pyplot.subplots(nrows=3, ncols=1,figsize=[20,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+	fig, axes = pyplot.subplots(nrows=3, ncols=1,figsize=[13,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
 	plot=[None]*3
 	axlbly=[None]*3
 
-	plot[0]=result_ctl.plot(ax=axes[0],vmin=0,vmax=30, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+	plot[0]=result_ctl.plot(ax=axes[0],cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[0])
 	m.drawcoastlines()
-	axlbly[0]=axes[0].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes)
+	axlbly[0]=axes[0].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)
 	axins = inset_axes(axes[0], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[0].transAxes, borderpad = 0)
-	fig.colorbar(plot[0], cax = axins)	
-
-	plot[1]=result_exp.plot(ax=axes[1],vmin=0,vmax=30, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+	cbar = fig.colorbar(plot[0], cax = axins)
+	cbar.ax.tick_params(labelsize=15)	
+	axes[0].set_title('')
+	axes[0].annotate("(a)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+		
+	plot[1]=result_exp.plot(ax=axes[1], cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[1])
 	m.drawcoastlines()
-	axlbly[1]=axes[1].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes)
+	axlbly[1]=axes[1].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes,fontsize=17)
 	axins = inset_axes(axes[1], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[1].transAxes, borderpad = 0)
-	fig.colorbar(plot[1], cax = axins)	
+	cbar = fig.colorbar(plot[1], cax = axins)
+	cbar.ax.tick_params(labelsize=15)	
+	axes[1].set_title('')	
+	axes[1].annotate("(b)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 
-	plot[2]=result_diff.plot(ax=axes[2],vmin=-10,vmax=10, cmap='RdBu_r', transform=ccrs.PlateCarree(),add_colorbar=False)
+	plot[2]=result_diff.plot(ax=axes[2],vmin=-2,vmax=2,cmap='RdBu', transform=ccrs.PlateCarree(),add_colorbar=False)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[2])
 	m.drawcoastlines()
-	axlbly[2]=axes[2].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2].transAxes)
+	axlbly[2]=axes[2].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2].transAxes,fontsize=17)
 	axins = inset_axes(axes[2], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[2].transAxes, borderpad = 0)
-	fig.colorbar(plot[2], cax = axins)	
+	cbar = fig.colorbar(plot[2], cax = axins)	
+	cbar.ax.tick_params(labelsize=15)	
+	axes[2].set_title('')	
+	axes[2].annotate("(c)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 
 	pyplot.tight_layout()
 	pyplot.savefig(plotfile)
 	return(plotfile)
+
+def xar_plot_ose_scalar_withobs(plotdic,axes=None):
+	data_obs=plotdic["data_obs"]
+        data_ctl=plotdic["data_ctl"]
+        data_exp=plotdic["data_exp"]
+        plotfile=plotdic["plotfile"]
+        axlbl_y_obs=plotdic["obsname"]
+        axlbl_y_ctl=plotdic["ctlname"]
+        axlbl_y_exp=plotdic["expname"]
+        #plotvar=plotdic["varname"]
+	result_obs = data_obs
+        result_ctl = data_ctl
+        result_exp = data_exp
+        #result_diff = result_exp - result_ctl
+        #result_ctl = data_ctl[plotvar]
+        #result_exp = data_exp[plotvar]
+	result_exp_d= essio.xar_regrid(result_exp)
+	result_ctl_d= essio.xar_regrid(result_ctl)
+        #result_d = result_exp - result_ctl
+        #result_dat=result_d.to_dataset(name=plotvar)
+        #print(result_dat)
+        #result_diff = essio.xar_regrid(result_d)
+        result_diff=result_exp_d-result_ctl_d
+	print(result_diff)
+        #result_diff=result_regrid[plotvar]
+        #print(result_diff)
+        #ipw_ctl = data_ctl.ipw
+        #ipw_exp = data_exp.ipw
+        #data_diff = data_exp - data_ctl
+        #ipw_diff = ipw_exp - ipw_ctl
+
+        fig, axes = pyplot.subplots(nrows=4, ncols=1,figsize=[5,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+        plot=[None]*4
+        axlbly=[None]*4
+
+        plot[0]=result_obs.plot(ax=axes[0],cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+        m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[0])
+        m.drawcoastlines()
+        axlbly[0]=axes[0].text(-0.2, 0.5, axlbl_y_obs, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)
+        axins = inset_axes(axes[0], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[0].transAxes, borderpad = 0)
+        cbar = fig.colorbar(plot[0], cax = axins)
+        cbar.ax.tick_params(labelsize=15)
+        axes[0].set_title('')
+        axes[0].annotate("(a)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+        plot[1]=result_ctl.plot(ax=axes[1],vmin=0,vmax=150, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+        m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[1])
+        m.drawcoastlines()
+        axlbly[1]=axes[1].text(-0.2, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes,fontsize=17)
+        axins = inset_axes(axes[1], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[1].transAxes, borderpad = 0)
+        cbar = fig.colorbar(plot[1], cax = axins)
+        cbar.ax.tick_params(labelsize=15)
+        axes[1].set_title('')
+        axes[1].annotate("(b)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+        plot[2]=result_exp.plot(ax=axes[2],vmin=0,vmax=150,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+        m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[2])
+        m.drawcoastlines()
+        axlbly[2]=axes[2].text(-0.2, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[2].transAxes,fontsize=17)
+        axins = inset_axes(axes[2], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[2].transAxes, borderpad = 0)
+        cbar = fig.colorbar(plot[2], cax = axins)
+        cbar.ax.tick_params(labelsize=15)
+        axes[2].set_title('')
+        axes[2].annotate("(c)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+        plot[3]=result_diff.plot(ax=axes[3],vmin=-2,vmax=2,cmap='RdBu', transform=ccrs.PlateCarree(),add_colorbar=False)
+        m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[3])
+        m.drawcoastlines()
+        axlbly[3]=axes[3].text(-0.2, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[3].transAxes,fontsize=17)
+        axins = inset_axes(axes[3], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[3].transAxes, borderpad = 0)
+        cbar = fig.colorbar(plot[3], cax = axins)
+        cbar.ax.tick_params(labelsize=15)
+        axes[3].set_title('')
+        axes[3].annotate("(d)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+        
+	pyplot.tight_layout()
+        pyplot.savefig(plotfile)
+        return(plotfile)
 
 def xar_plot_ose_vector(plotdic):
 	data_ctl=plotdic["data_ctl"]
@@ -2004,38 +2098,216 @@ def xar_plot_ose_vector(plotdic):
 	u_exp = data_exp.u
 	v_exp = data_exp.v
 
-	lon=data_ctl.lon
-	lat=data_ctl.lat
+	lon=data_ctl.longitude
+	lat=data_ctl.latitude
 
-	mag_ctl = numpy.sqrt(u_ctl.isel(time=0).values**2 + v_ctl.isel(time=0).values**2)
-	mag_exp = numpy.sqrt(u_exp.isel(time=0).values**2 + v_exp.isel(time=0).values**2)
+	#mag_ctl = numpy.sqrt(u_ctl.isel(time=0).values**2 + v_ctl.isel(time=0).values**2)
+	#mag_exp = numpy.sqrt(u_exp.isel(time=0).values**2 + v_exp.isel(time=0).values**2)
+	mag_ctl = numpy.sqrt(u_ctl.values**2 + v_ctl.values**2)
+	mag_exp = numpy.sqrt(u_exp.values**2 + v_exp.values**2)
 
-	fig, axes = pyplot.subplots(nrows=3, ncols=1,figsize=[20,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+	fig, axes = pyplot.subplots(nrows=3, ncols=1,figsize=[15,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
 
 	m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[0])
 	m.drawcoastlines()
-	axes[0].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes)
-	c_ctl=axes[0].quiver(lon[::40], lat[::40], u_ctl.isel(time=0).values[::40,::40 ], v_ctl.isel(time=0).values[::40,::40],mag_ctl[::40,::40],cmap='jet')
-	pyplot.colorbar(c_ctl,ax=axes[0])
+	axes[0].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)
+	#c_ctl=axes[0].quiver(lon[::40], lat[::40], u_ctl.isel(time=0).values[::40,::40 ], v_ctl.isel(time=0).values[::40,::40],mag_ctl[::40,::40],cmap='jet')
+	c_ctl=axes[0].quiver(lon[::40], lat[::40], u_ctl.values[::40,::40 ], v_ctl.values[::40,::40],mag_ctl[::40,::40],cmap='jet')
+	cbar=pyplot.colorbar(c_ctl,ax=axes[0])
+	cbar.ax.tick_params(labelsize=15)	
+	axes[0].tick_params(labelsize=40)
+	axes[0].annotate("(a)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 
 	m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[1])
 	m.drawcoastlines()
-	axes[1].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes)
-	c_exp=axes[1].quiver(lon[::40], lat[::40], u_exp.isel(time=0).values[::40,::40 ], v_exp.isel(time=0).values[::40,::40],mag_exp[::40,::40],cmap='jet')
-	pyplot.colorbar(c_exp,ax=axes[1])
-
-	u_diff = u_exp-u_ctl
-	v_diff = v_exp-v_ctl
-	mag_diff = numpy.sqrt(u_diff.isel(time=0).values**2 + v_diff.isel(time=0).values**2)
+	axes[1].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes,fontsize=17)
+	#c_exp=axes[1].quiver(lon[::40], lat[::40], u_exp.isel(time=0).values[::40,::40 ], v_exp.isel(time=0).values[::40,::40],mag_exp[::40,::40],cmap='jet')
+	c_exp=axes[1].quiver(lon[::40], lat[::40], u_exp.values[::40,::40 ], v_exp.values[::40,::40],mag_exp[::40,::40],cmap='jet')
+	cbar=pyplot.colorbar(c_exp,ax=axes[1])
+	cbar.ax.tick_params(labelsize=15)	
+	axes[1].annotate("(b)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+	
+	u_exp_mask = numpy.where(mag_exp<100,numpy.nan,u_exp)
+	v_exp_mask = numpy.where(mag_exp<100,numpy.nan,v_exp)
+	u_ctl_mask = numpy.where(mag_ctl<100,numpy.nan,u_ctl)
+	v_ctl_mask = numpy.where(mag_ctl<100,numpy.nan,v_ctl)
+	u_diff = u_exp_mask-u_ctl_mask
+	print(u_diff)
+	v_diff = v_exp_mask-v_ctl_mask
+	#u_diff = u_exp-u_ctl
+	#v_diff = v_exp-v_ctl
+	#mag_diff = numpy.sqrt(u_diff.isel(time=0).values**2 + v_diff.isel(time=0).values**2)
+	#mag_diff = numpy.sqrt(u_diff.values**2 + v_diff.values**2)
+	mag_diff = numpy.sqrt(u_diff**2 + v_diff**2)
+	#magmask_diff = numpy.where(mag_diff>10,numpy.isnan(mag_diff),mag_diff)
+	#magmask_diff = numpy.where(magmask_diff<2,numpy.isnan(magmask_diff),magmask_diff)
+	#print(magmask_diff)
 	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[2])
 	m.drawcoastlines()
-	axes[2].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2].transAxes)
-	c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff.isel(time=0).values[::20,::20], v_diff.isel(time=0).values[::20,::20],mag_diff[::20,::20],cmap='RdBu_r')
-	pyplot.colorbar(c_diff,ax=axes[2])
-	
+	axes[2].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2].transAxes,fontsize=17)
+	#c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff.isel(time=0).values[::20,::20], v_diff.isel(time=0).values[::20,::20],mag_diff[::20,::20],cmap='RdBu_r')
+	#scale_factor=100/numpy.max(magmask_diff)
+	#c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff.values[::20,::20], v_diff.values[::20,::20],magmask_diff[::20,::20],cmap='jet',scale=400)
+	c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff[::20,::20], v_diff[::20,::20],mag_diff[::20,::20],cmap='jet',scale=400)
+	cbar=pyplot.colorbar(c_diff,ax=axes[2])
+	cbar.ax.tick_params(labelsize=15)	
+	axes[2].annotate("(c)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
 	pyplot.tight_layout()
 	pyplot.savefig(plotfile)
 	return(plotfile)
+
+def xar_plot_ose_wind_preslev(plotdic):
+        data_ctl=plotdic["data_ctl"]
+        data_exp=plotdic["data_exp"]
+        plotfile=plotdic["plotfile"]
+        axlbl_y_ctl=plotdic["ctlname"]
+        axlbl_y_exp=plotdic["expname"]
+
+        u_ctl = data_ctl.x_wind
+        v_ctl = data_ctl.y_wind
+        u_exp = data_exp.x_wind
+        v_exp = data_exp.y_wind
+
+        lon=data_ctl.longitude
+        lat=data_ctl.latitude
+
+        #mag_ctl = numpy.sqrt(u_ctl.isel(time=0).values**2 + v_ctl.isel(time=0).values**2)
+        #mag_exp = numpy.sqrt(u_exp.isel(time=0).values**2 + v_exp.isel(time=0).values**2)
+        mag_ctl = numpy.sqrt(u_ctl.values**2 + v_ctl.values**2)
+        mag_exp = numpy.sqrt(u_exp.values**2 + v_exp.values**2)
+
+        fig, axes = pyplot.subplots(nrows=3, ncols=1,figsize=[15,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+
+        m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[0])
+        m.drawcoastlines()
+        axes[0].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0].transAxes,fontsize=17)
+        c_ctl=axes[0].quiver(lon[::40], lat[::40], u_ctl.values[::40,::40 ], v_ctl.values[::40,::40],mag_ctl[::40,::40],cmap='jet')
+        #c_ctl=axes[0].quiver(lon[::10], lat[::10], u_ctl.values[::10,::10], v_ctl.values[::10,::10],mag_ctl[::10,::10],cmap='jet')
+        cbar=pyplot.colorbar(c_ctl,ax=axes[0])
+        cbar.ax.tick_params(labelsize=15)
+        axes[0].tick_params(labelsize=40)
+        axes[0].annotate("(a)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+        m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[1])
+        m.drawcoastlines()
+        axes[1].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1].transAxes,fontsize=17)
+        c_exp=axes[1].quiver(lon[::40], lat[::40], u_exp.values[::40,::40 ], v_exp.values[::40,::40],mag_exp[::40,::40],cmap='jet')
+        #c_exp=axes[1].quiver(lon[::10], lat[::10], u_exp.values[::10,::10], v_exp.values[::10,::10],mag_exp[::10,::10],cmap='jet')
+        cbar=pyplot.colorbar(c_exp,ax=axes[1])
+        cbar.ax.tick_params(labelsize=15)
+        axes[1].annotate("(b)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+        u_diff = u_exp-u_ctl
+        v_diff = v_exp-v_ctl
+        #mag_diff = numpy.sqrt(u_diff.isel(time=0).values**2 + v_diff.isel(time=0).values**2)
+        mag_diff = numpy.sqrt(u_diff.values**2 + v_diff.values**2)
+        #mag_diff = numpy.sqrt(u_diff**2 + v_diff**2)
+        m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[2])
+        m.drawcoastlines()
+        axes[2].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2].transAxes,fontsize=17)
+        c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff.values[::20,::20], v_diff.values[::20,::20],mag_diff[::20,::20],cmap='jet')
+        #c_diff=axes[2].quiver(lon[::10], lat[::10], u_diff.values[::10,::10], v_diff.values[::10,::10],mag_diff[::10,::10],cmap='jet',scale=400)
+        #c_diff=axes[2].quiver(lon[::20], lat[::20], u_diff[::20,::20], v_diff[::20,::20],mag_diff[::20,::20],cmap='jet',scale=400)
+        cbar=pyplot.colorbar(c_diff,ax=axes[2])
+        cbar.ax.tick_params(labelsize=15)
+        axes[2].annotate("(c)",fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+        pyplot.tight_layout()
+        pyplot.savefig(plotfile)
+        return(plotfile)
+
+def xar_plot_ose_vector3x3(plotdic):
+        fig, axes = pyplot.subplots(nrows=3, ncols=3,figsize=[30,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+        plot=[None]*9
+        axlbly=[None]*9
+        for i in range(0,3):
+                j=i*3
+
+		data_ctl=plotdic["data_ctl"]
+        	data_exp=plotdic["data_exp"]
+        	plotfile=plotdic["plotfile"]
+        	axlbl_y_ctl=plotdic["ctlname"]
+       		axlbl_y_exp=plotdic["expname"]
+
+	        u_ctl1 = data_ctl.u
+	        v_ctl1 = data_ctl.v
+        	u_exp1 = data_exp.u
+        	v_exp1 = data_exp.v
+		
+		u_ctl=u_ctl1.isel(time=i)
+		v_ctl=v_ctl1.isel(time=i)
+		u_exp=u_exp1.isel(time=i)
+		v_exp=v_exp1.isel(time=i)
+	
+        	lon=data_ctl.longitude
+        	lat=data_ctl.latitude
+
+       		mag_ctl = numpy.sqrt(u_ctl.values**2 + v_ctl.values**2)
+       		mag_exp = numpy.sqrt(u_exp.values**2 + v_exp.values**2)
+		label = [['(a)','(b)','(c)'],
+			 ['(d)','(e)','(f)'],
+			 ['(g)','(h)','(i)']]
+
+		pltindx=j+0
+	        m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[0,i])
+	        #m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[0,i])
+	        m.drawcoastlines()
+	        axlbly[pltindx]=axes[0,i].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0,i].transAxes,fontsize=17)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+        	plot[pltindx]=axes[0,i].quiver(lon[::40], lat[::40], u_ctl.values[::40,::40], v_ctl.values[::40,::40],mag_ctl[::40,::40],cmap='jet')
+        	cbar=pyplot.colorbar(plot[pltindx],ax=axes[0,i])
+        	cbar.ax.tick_params(labelsize=15)
+        	axes[0,i].tick_params(labelsize=40)
+        	axes[0,i].annotate(label[0][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+		
+		pltindx=j+1
+        	m = Basemap(projection='cyl', llcrnrlat=-90, urcrnrlat=90,llcrnrlon=-180, urcrnrlon=180, resolution='c',ax=axes[1,i])
+	        #m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[1,i])
+        	m.drawcoastlines()
+        	axlbly[pltindx]=axes[1,i].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1,i].transAxes,fontsize=17)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+        	plot[pltindx]=axes[1,i].quiver(lon[::40], lat[::40], u_exp.values[::40,::40], v_exp.values[::40,::40],mag_exp[::40,::40],cmap='jet')
+        	cbar=pyplot.colorbar(plot[pltindx],ax=axes[1,i])
+        	cbar.ax.tick_params(labelsize=15)
+        	axes[1,i].annotate(label[1][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+		pltindx=j+2
+        	#u_exp_mask = numpy.where(mag_exp<100,numpy.nan,u_exp)
+	        #v_exp_mask = numpy.where(mag_exp<100,numpy.nan,v_exp)
+        	#u_ctl_mask = numpy.where(mag_ctl<100,numpy.nan,u_ctl)
+        	#v_ctl_mask = numpy.where(mag_ctl<100,numpy.nan,v_ctl)
+        	#u_diff = u_exp_mask-u_ctl_mask
+        	#print(u_diff)
+        	#v_diff = v_exp_mask-v_ctl_mask
+        	u_diff = u_exp-u_ctl
+        	v_diff = v_exp-v_ctl
+
+		mag_diff = numpy.sqrt(u_diff**2 + v_diff**2)
+		#print("mean",numpy.mean(mag_diff))
+		#print("standard deviation",numpy.std(mag_diff))
+		mean=mag_diff.mean().values
+		std=mag_diff.std().values
+		sum1=mean+(2*std)
+		print("sum",sum1)
+		norm = Normalize(vmin=0, vmax=23)
+		#mag_diff = numpy.sqrt(u_diff.values**2 + v_diff.values**2)
+        	m = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c',ax=axes[2,i])
+	        #m = Basemap(projection='cyl', llcrnrlat=-15, urcrnrlat=45,llcrnrlon=30, urcrnrlon=120, resolution='c',ax=axes[2,i])
+        	m.drawcoastlines()
+        	axlbly[pltindx]=axes[2,i].text(-0.1, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[2,i].transAxes,fontsize=17)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+        	plot[pltindx]=axes[2,i].quiver(lon[::20], lat[::20], u_diff[::20,::20], v_diff[::20,::20],mag_diff[::20,::20],cmap='jet',norm=norm)
+        	cbar=pyplot.colorbar(plot[pltindx],ax=axes[2,i])
+		#cbar.set_clim(0, mean + std)
+        	cbar.ax.tick_params(labelsize=15)
+        	axes[2,i].annotate(label[2][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+        
+	pyplot.tight_layout()
+        pyplot.savefig(plotfile)
+        return(plotfile)
+
 
 def xar_plot_ose_stream(plotdic):
 	data_ctl=plotdic["data_ctl"]
@@ -2072,6 +2344,260 @@ def xar_plot_ose_stream(plotdic):
 	pyplot.tight_layout()
 	pyplot.savefig(plotfile)
 	return(plotfile)
+
+def xar_plot_ose_panel3x3(plotdic,axes=None):
+	fig, axes = pyplot.subplots(nrows=3, ncols=3,figsize=[30,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+	
+	plot=[None]*9
+	axlbly=[None]*9
+	for i in range(0,3):
+		j=i*3
+		data_ctl=plotdic["data_ctl"]
+		data_exp=plotdic["data_exp"]
+		plotfile=plotdic["plotfile"]
+		axlbl_y_ctl=plotdic["ctlname"]
+		axlbl_y_exp=plotdic["expname"]
+		#plotvar=plotdic["varname"]
+		
+		result_ctl = data_ctl.isel(time=i)
+		result_exp = data_exp.isel(time=i)
+		print("result_ctl",result_ctl)
+		result_diff = result_exp - result_ctl
+		#ipw_ctl = data_ctl.ipw
+		#ipw_exp = data_exp.ipw
+		#data_diff = data_exp - data_ctl
+		#ipw_diff = ipw_exp - ipw_ctl
+		label = [['(a)','(b)','(c)'],
+			 ['(d)','(e)','(f)'],
+			 ['(g)','(h)','(i)']]
+		pltindx=j+0
+		plot[pltindx]=result_ctl.plot(ax=axes[0,i],cmap='coolwarm', transform=ccrs.PlateCarree(),add_colorbar=False)
+		m = Basemap(projection='cyl',llcrnrlat=-15,urcrnrlat=45,llcrnrlon=30,urcrnrlon=120,resolution='c',ax=axes[0,i])
+		m.drawcoastlines()
+		axlbly[pltindx]=axes[0,i].text(-0.1, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[0,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+		axins = inset_axes(axes[0,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[0,i].transAxes, borderpad = 0)
+		fig.colorbar(plot[pltindx], cax = axins)
+		axes[0,i].set_title('')	
+        	axes[0,i].annotate(label[0][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+		pltindx=j+1
+		plot[pltindx]=result_exp.plot(ax=axes[1,i], cmap='coolwarm', transform=ccrs.PlateCarree(),add_colorbar=False)
+		m = Basemap(projection='cyl',llcrnrlat=-15,urcrnrlat=45,llcrnrlon=30,urcrnrlon=120,resolution='c',ax=axes[1,i])
+		m.drawcoastlines()
+		axlbly[pltindx]=axes[1,i].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[1,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+		axins = inset_axes(axes[1,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[1,i].transAxes, borderpad = 0)
+		fig.colorbar(plot[pltindx], cax = axins)	
+		axes[1,i].set_title('')	
+        	axes[1,i].annotate(label[1][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+		
+		pltindx=j+2
+		plot[pltindx]=result_diff.plot(ax=axes[2,i], cmap='RdBu_r', transform=ccrs.PlateCarree(),add_colorbar=False)
+		m = Basemap(projection='cyl',llcrnrlat=-15,urcrnrlat=45,llcrnrlon=30,urcrnrlon=120,resolution='c',ax=axes[2,i])
+		m.drawcoastlines()
+		axlbly[pltindx]=axes[2,i].text(-0.1, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[2,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+		axins = inset_axes(axes[2,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[2,i].transAxes, borderpad = 0)
+		fig.colorbar(plot[pltindx], cax = axins)	
+		axes[2,i].set_title('')	
+        	axes[2,i].annotate(label[2][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+		
+
+	pyplot.tight_layout()
+	pyplot.savefig(plotfile)
+	return(plotfile)
+
+
+
+def xar_plot_ose_panel_withobs(plotdic,axes=None):
+        fig, axes = pyplot.subplots(nrows=4, ncols=3,figsize=[15,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+
+        plot=[None]*12
+        axlbly=[None]*12
+        for i in range(0,3):
+                j=i*4
+                data_obs=plotdic["data_obs"]
+                data_ctl=plotdic["data_ctl"]
+                data_exp=plotdic["data_exp"]
+                plotfile=plotdic["plotfile"]
+                axlbl_y_obs=plotdic["obsname"]
+                axlbl_y_ctl=plotdic["ctlname"]
+                axlbl_y_exp=plotdic["expname"]
+                #plotvar=plotdic["varname"]
+
+                result_obs = data_obs.isel(time=i)
+                result_ctl = data_ctl.isel(time=i)
+                result_exp = data_exp.isel(time=i)
+                print("result_ctl",result_ctl)
+                result_diff = result_exp - result_ctl
+                #ipw_ctl = data_ctl.ipw
+                #ipw_exp = data_exp.ipw
+                #data_diff = data_exp - data_ctl
+                #ipw_diff = ipw_exp - ipw_ctl
+		label = [['(a)','(b)','(c)'],
+			 ['(d)','(e)','(f)'],
+			 ['(g)','(h)','(i)'],
+			 ['(j)','(k)','(l)']]
+		
+                pltindx=j+0
+                plot[pltindx]=result_obs.plot(ax=axes[0,i],vmin=0,vmax=25,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+                m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[0,i])
+                m.drawcoastlines()
+                axlbly[pltindx]=axes[0,i].text(-0.2, 0.5, axlbl_y_obs, va='center', ha='center', rotation='vertical', transform=axes[0,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+                axins = inset_axes(axes[0,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[0,i].transAxes, borderpad = 0)
+                fig.colorbar(plot[pltindx], cax = axins)
+                axes[0,i].set_title('')
+		axes[0,i].annotate(label[0][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+                pltindx=j+1
+                plot[pltindx]=result_ctl.plot(ax=axes[1,i],vmin=0,vmax=25, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+                m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[1,i])
+                m.drawcoastlines()
+                axlbly[pltindx]=axes[1,i].text(-0.2, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[1,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+                axins = inset_axes(axes[1,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[1,i].transAxes, borderpad = 0)
+                fig.colorbar(plot[pltindx], cax = axins)
+                axes[1,i].set_title('')
+		axes[1,i].annotate(label[1][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+                pltindx=j+2
+                plot[pltindx]=result_exp.plot(ax=axes[2,i],vmin=0,vmax=25, cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+                m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[2,i])
+                m.drawcoastlines()
+                axlbly[pltindx]=axes[2,i].text(-0.2, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[2,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+                axins = inset_axes(axes[2,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[2,i].transAxes, borderpad = 0)
+                fig.colorbar(plot[pltindx], cax = axins)
+                axes[2,i].set_title('')
+		axes[2,i].annotate(label[2][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+                pltindx=j+3
+                plot[pltindx]=result_diff.plot(ax=axes[3,i],vmin=-2,vmax=2, cmap='RdBu', transform=ccrs.PlateCarree(),add_colorbar=False)
+                m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[3,i])
+                m.drawcoastlines()
+                axlbly[pltindx]=axes[3,i].text(-0.2, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[3,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+                axins = inset_axes(axes[3,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[3,i].transAxes, borderpad = 0)
+                fig.colorbar(plot[pltindx], cax = axins)
+                axes[3,i].set_title('')
+		axes[3,i].annotate(label[3][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+		
+
+        pyplot.tight_layout()
+        pyplot.savefig(plotfile)
+        return(plotfile)
+
+def xar_plot_ose_obs(plotdic,axes=None):
+        fig, axes = pyplot.subplots(nrows=4, ncols=3,figsize=[15,15], subplot_kw={'projection': ccrs.PlateCarree(central_longitude=0)})
+
+        plot=[None]*12
+        axlbly=[None]*12
+        for i in range(0,3):
+                j=i*4
+                data_obs=plotdic["data_obs"]
+                data_ctl=plotdic["data_ctl"]
+                data_exp=plotdic["data_exp"]
+                plotfile=plotdic["plotfile"]
+                axlbl_y_obs=plotdic["obsname"]
+                axlbl_y_ctl=plotdic["ctlname"]
+                axlbl_y_exp=plotdic["expname"]
+                #plotvar=plotdic["varname"]
+
+                result_obs = data_obs.isel(time=i)
+		print("OBSERVATION",result_obs)
+		#result_obs_renam = result_obs.rename({'lat':'latitude','lon':'longitude'})
+		#result_obs_final = result_obs_renam.rename("precipitation_flux")
+		#print("Mean",numpy.mean(result_obs_final))
+		#print("MIN MIN MIN",numpy.min(result_obs_final))
+		#print("result_obs_final result_obs_final result_obs_final",result_obs_final)
+                result_ctl = data_ctl.isel(time=i)
+		#print("Mean of ctl",numpy.mean(result_ctl))
+		#print("MIN MIN MIN of ctl",numpy.min(result_ctl))
+		#result_ctl_interp = result_ctl.interp(latitude=result_obs_final.latitude,longitude=result_obs_final.longitude)
+		#print("result_ctl_interp",result_ctl_interp)
+                result_exp = data_exp.isel(time=i)
+		#print("MAX MAX MAX of exp",numpy.max(result_exp))
+		#print("MIN MIN MIN of exp",numpy.min(result_exp))
+		#result_exp_interp = result_exp.interp(latitude=result_obs_final.latitude,longitude=result_obs_final.longitude)
+		#print("result_exp_interp",result_exp_interp)
+		#result_obs_f = result_obs_final.interp(latitude=result_ctl.latitude,longitude=result_ctl.longitude)
+                #print("result_obs_fresult_obs_fresult_obs_fresult_obs_fresult_obs_f",result_obs_f)
+		result_diff = result_exp - result_ctl
+		diff_ctl = result_ctl - result_obs_f
+		diff_exp = result_exp - result_obs_f
+                print("diff_ctl diff_ctl diff_ctl diff_ctl diff_ctl",numpy.mean(diff_ctl))
+		print("MAX MAX MAX of diff_ctl",numpy.max(diff_ctl))
+		print("MIN MIN MIN of diff_ctl",numpy.min(diff_ctl))
+		#ipw_ctl = data_ctl.ipw
+                #ipw_exp = data_exp.ipw
+                #data_diff = data_exp - data_ctl
+                #ipw_diff = ipw_exp - ipw_ctl
+		label = [['(a)','(b)','(c)'],
+			 ['(d)','(e)','(f)'],
+			 ['(g)','(h)','(i)'],
+			 ['(j)','(k)','(l)']]
+		
+                pltindx=j+0
+                plot[pltindx]=result_obs.plot(ax=axes[0,i],vmin=0,vmax=70,cmap='Blues', transform=ccrs.PlateCarree(),add_colorbar=False)
+                m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[0,i])
+                m.drawcoastlines()
+                axlbly[pltindx]=axes[0,i].text(-0.2, 0.5, axlbl_y_obs, va='center', ha='center', rotation='vertical', transform=axes[0,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+		axins = inset_axes(axes[0,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[0,i].transAxes, borderpad = 0)
+                fig.colorbar(plot[pltindx], cax = axins)
+                axes[0,i].set_title('')
+		axes[0,i].annotate(label[0][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+                pltindx=j+1
+                plot[pltindx]=diff_ctl.plot(ax=axes[1,i],vmin=-50,vmax=50, cmap='RdBu', transform=ccrs.PlateCarree(),add_colorbar=False)
+                m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[1,i])
+                m.drawcoastlines()
+                axlbly[pltindx]=axes[1,i].text(-0.2, 0.5, axlbl_y_ctl, va='center', ha='center', rotation='vertical', transform=axes[1,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+                axins = inset_axes(axes[1,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[1,i].transAxes, borderpad = 0)
+                fig.colorbar(plot[pltindx], cax = axins)
+                axes[1,i].set_title('')
+		axes[1,i].annotate(label[1][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+                pltindx=j+2
+                plot[pltindx]=diff_exp.plot(ax=axes[2,i],vmin=-50,vmax=50, cmap='RdBu', transform=ccrs.PlateCarree(),add_colorbar=False)
+                m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[2,i])
+                m.drawcoastlines()
+                axlbly[pltindx]=axes[2,i].text(-0.2, 0.5, axlbl_y_exp, va='center', ha='center', rotation='vertical', transform=axes[2,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+                axins = inset_axes(axes[2,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[2,i].transAxes, borderpad = 0)
+                fig.colorbar(plot[pltindx], cax = axins)
+                axes[2,i].set_title('')
+		axes[2,i].annotate(label[2][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+
+                pltindx=j+3
+                plot[pltindx]=result_diff.plot(ax=axes[3,i],vmin=-2,vmax=2, cmap='RdBu', transform=ccrs.PlateCarree(),add_colorbar=False)
+                m = Basemap(projection='cyl',llcrnrlat=-30,urcrnrlat=40,llcrnrlon=50,urcrnrlon=110,resolution='c',ax=axes[3,i])
+                m.drawcoastlines()
+                axlbly[pltindx]=axes[3,i].text(-0.2, 0.5, 'EXP-CTL', va='center', ha='center', rotation='vertical', transform=axes[3,i].transAxes,fontsize=14)
+                if i==1 or i==2:
+			axlbly[pltindx].set_text('')
+                axins = inset_axes(axes[3,i], width = "5%", height = "100%", loc = 'lower left', bbox_to_anchor = (1.09, 0., 1, 1), bbox_transform = axes[3,i].transAxes, borderpad = 0)
+                fig.colorbar(plot[pltindx], cax = axins)
+                axes[3,i].set_title('')
+		axes[3,i].annotate(label[3][i],fontsize=12, xy=(0, 1.01), xycoords='axes fraction')
+        
+	pyplot.tight_layout()
+        pyplot.savefig(plotfile)
+        return(plotfile)
+
 
 #############################################################################################################################
 ### IRIS based functions

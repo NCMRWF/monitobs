@@ -14,12 +14,12 @@ import obsmod
 
 datauser="meena"
 
-datapath="/scratch/"+datauser+"/cylc-run/PS45_withSatTCWV/share/cycle/20230601T0000Z/glm_obstore"
+datapath="/scratch/"+datauser+"/data/postprocessed/sattcwv_obstore/sattcwv_umprod_gdas_dump_20230601_12"
 plotpath="/scratch/"+usernam+"/plots"
 nmlpath="/home/"+datauser+"/packages/monitobs/nml"
 obstypelist = ["sattcwv"]
-text="20230601T0000Z SatTCWV"
-title="20230601T0000Z SatTCWV"
-pltnam="SatTCWV_20230601T0000Z"
+text="20230601T1200Z SatTCWV"
+title="20230601T1200Z SatTCWV"
+pltnam="SatTCWV_20230601T1200Z"
 
 obsmod.obs_latlon_plot(datapath,plotpath,nmlpath,obstypelist=obstypelist,text=text,title=title,pltnam=pltnam)

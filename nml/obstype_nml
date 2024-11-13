@@ -81,7 +81,7 @@
                                                      ! ** Satwinds **
 21010 ObsTYPEAMV          = 21010   ! => Combined AMV data
 21021 ObsTypeSatobIR      = 21021   ! => Satob - Infrared
- ObsTypeSatobVIS     = 21022   ! => Satob - Visible
+21022 ObsTypeSatobVIS     = 21022   ! => Satob - Visible
  ObsTypeSatobWV      = 21023   ! => Satob - Water Vapour
  ObsTypeSatobMC      = 21024   ! => Satob - Multi-channel
  ObsTypeGoesamw      = 22000   ! => HD GOES Satob, infrared

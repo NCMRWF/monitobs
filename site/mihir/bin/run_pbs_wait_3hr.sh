@@ -8,7 +8,6 @@ PKGNAM=${PKGHOME##*/}
 JOBSDIR="${PKGHOME}/jobs"
 
 export JOBSCRIPT=$1
-export JOBSCRIPT=$(which ${JOBSCRIPT})
 export HOSTPKG=${JOBSCRIPT%/jobs/*}
 TYPE=${JOBSCRIPT##*.}
 if [[ ${TYPE} == "py" ]]; then
@@ -40,6 +39,7 @@ cat >> ${PBSFILE} << EOF
 #PBS -N ${TASKNAM}
 #PBS -l select=${NODE_CNT}:ncpus=1:vntype=cray_compute
 #PBS -l place=scatter
+#PBS -l walltime=03:00:00
 #PBS -o ${LOGDIR}/${TASKNAM}_${RUNTIME}.out
 #PBS -e ${LOGDIR}/${TASKNAM}_${RUNTIME}.err
 export LOGDIR=${LOGDIR}

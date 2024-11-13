@@ -1,9 +1,18 @@
 keys: information
+obsgroup: 3 
 obsname: aircraft
 gdasname: 
 bufrmtyp: 
-obsubtyp: 30100 
-elemcnt: 
-OBSTORE: Aircraft
+obsubtyplst: [30100,] 
+elemcntlst: [,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
+OBSTORE: Aircraft 
+HDRFILE: 
 longname: Aircraft
-satinstsnsr aircraft
+satinstsnsr: aircraft
+elemlist_:  
+brightnessTemperature:
+metdbsubtype: 
+SatID: 

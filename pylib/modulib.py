@@ -422,6 +422,11 @@ def obstore_write(data,keynmlfile,outpath,btchcnt=None,cntmax=None,DT=None,diagf
 	outfile=obstore.obstore_write(data,keynmlfile,outpath,btchcnt=btchcnt,cntmax=cntmax,DT=DT,diagflag=diagflag,missing_value=missing_value)
 	return(outfile)
 
+#def obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX):
+#	return(obstore.obstore_read_file(inpath,obstype,nmlpath=OBSNML,filevar=None,maxindx=MAXINDX))
+    
+def obstore_read_file(inpath,obstype,**kwargs):
+	return(obstore.obstore_read_file(inpath,obstype,**kwargs))
     
 def obstore_create_file(obstore_info,diagflg=0,callsignflag=False,filedata=None):
 	obstore_info=obstore.obstore_create_file(obstore_info,diagflg=diagflg,callsignflag=callsignflag,filedata=filedata)
@@ -433,8 +438,8 @@ def create_obstore(obstore_info,diagflg=0,callsignflag=False,filedata=None):
 	obstore_info=obstore_create_file(obstore_info,diagflg=diagflg,callsignflag=callsignflag,filedata=filedata)
 	return(obstore_info)
 
-def datset_extract(infile,varlst=None,dimlst=None,outpath=None,outfile=None,callback=None,stashcode=None,option=2,diagflg=0):
-	datset=essio.datset_extract(infile,varlst=varlst,dimlst=dimlst,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,option=option,diagflg=diagflg)
+def datset_extract(infile,varlst=None,dimlst=None,outpath=None,outfile=None,callback=None,stashcode=None,indxkeys=None,indxfltr=None,attrlst=None,option=None,diagflg=0):
+	datset=essio.datset_extract(infile,varlst=varlst,dimlst=dimlst,outpath=outpath,outfile=outfile,callback=callback,stashcode=stashcode,indxkeys=indxkeys,indxfltr=indxfltr,attrlst=attrlst,option=option,diagflg=diagflg)
 	return(datset)
 
 def datset_save(datset,outpath=None,outfile=None,infile=None):

@@ -1,9 +1,18 @@
 keys: information
+obsgroup: 
 obsname: atms
 gdasname: 
 bufrmtyp: 
-obsubtyp:
-elemcnt: 
-OBSTORE: ATMS
-longname: ATMS 
+obsubtyplst: [25000,] 
+elemcntlst: [,]
+maxindx: 621
+hdrsize: 339
+lutsize: 128
+OBSTORE: ATMS 
+HDRFILE: 
+longname: ATMS
 satinstsnsr: snpp-atms,noaa20-atms
+elemlist_:  
+brightnessTemperature:
+metdbsubtype: 
+SatID: 
